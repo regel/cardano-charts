@@ -1,0 +1,36 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+  
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - 
+        name: Check out code
+        uses: actions/checkout@v1
+      - 
+        name: Reviewdog Lint
+        uses: reviewdog/action-golangci-lint@v1
+        with:
+          reporter: github-check
+          
+  test:
+    name: Test and Cover
+    runs-on: ubuntu-latest
+    steps:
+      - 
+        name: Check out code
+        uses: actions/checkout@v1
+      - 
+        name: Run Unit tests
+        working-directory: ./topology-updater
+        run: go test -coverprofile=coverage.txt ./...
+      - 
+        name: Upload Coverage report to CodeCov
+        uses: codecov/codecov-action@v1
+        with:
+          file: ./coverage.txt
