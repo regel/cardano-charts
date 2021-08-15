@@ -1,0 +1,44 @@
+builds:
+  - id: default
+    main: main.go
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+    env:
+      - CGO_ENABLED=0
+  - id: goboring
+    main: main.go
+    goos:
+      - linux
+    goarch:
+      - amd64
+    env:
+      - CGO_ENABLED=1
+
+archives:
+  - id: default
+    format: tar.gz
+    replacements:
+      darwin: macOS
+      amd64: 64-bit
+    files:
+      - LICENSE
+      - README.md
+    builds:
+      - default
+  - id: goboring
+    format: tar.gz
+    replacements:
+      amd64: 64-bit_goboring
+    files:
+      - LICENSE
+      - README.md
+    builds:
+      - goboring
+
+release:
+  draft: true
+  prerelease: true
