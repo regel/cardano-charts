@@ -56,10 +56,9 @@ jobs:
       -
         name: Scratch image
         uses: docker/build-push-action@v2
-        working-directory: ./topology-updater
         with:
-          context: .
-          file: ./Dockerfile
+          context: ./topology-updater
+          file: ./topology-updater/Dockerfile
           push: true
           tags: ${{ steps.prep.outputs.tags }}
           build-args: LDFLAGS=-s -w -X main.version=${{ steps.prep.outputs.version }} -X main.commit=${{ github.SHA }} -X main.date=${{ steps.prep.outputs.created }}
@@ -102,8 +101,8 @@ jobs:
         uses: docker/build-push-action@v2
         working-directory: ./topology-updater
         with:
-          context: .
-          file: ./Dockerfile
+          context: ./topology-updater
+          file: ./topology-updater/Dockerfile
           push: true
           tags: ${{ steps.prep.outputs.tags }}
           build-args: |
@@ -146,10 +145,9 @@ jobs:
       -
         name: Boring Crypto Image
         uses: docker/build-push-action@v2
-        working-directory: ./topology-updater
         with:
-          context: .
-          file: ./Dockerfile
+          context: ./topology-updater
+          file: ./topology-updater/Dockerfile
           push: true
           tags: ${{ steps.prep.outputs.tags }}
           build-args: |
