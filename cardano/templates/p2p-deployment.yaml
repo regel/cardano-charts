@@ -1,0 +1,89 @@
+apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
+kind: Deployment
+metadata:
+  name: "{{ include "cardano.fullname" . }}-p2p"
+  labels:
+    app.kubernetes.io/component: p2p
+    {{- include "cardano.labels" . | nindent 4 }}
+  annotations:
+  {{- if .Values.commonAnnotations }}
+  {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: {{ .Values.p2p.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: p2p
+      {{- include "cardano.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/testnet: {{ include (print $.Template.BasePath "/p2p-configmap.yaml") . | sha256sum }}
+    {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      labels:
+        app.kubernetes.io/component: p2p
+        {{- include "cardano.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "cardano.serviceAccountName" . }}
+      securityContext:
+        runAsNonRoot: true
+      containers:
+        - name: p2p
+          securityContext:
+            runAsUser: 65532
+            capabilities:
+              add:
+              - NET_BIND_SERVICE
+              drop:
+              - all
+          image: "{{- .Values.p2p.repository -}}:{{- .Values.p2p.tag | default .Chart.AppVersion -}}"
+          imagePullPolicy: {{ .Values.p2p.pullPolicy }}
+          resources:
+            limits:
+              cpu: "10m"
+              memory: "64Mi"
+          command: ["/bin/sh", "-c"]
+          args:
+            - /cardano-p2p
+              --config /p2p.yaml
+              p2p
+          volumeMounts:
+            - name: config
+              mountPath: /p2p.yaml
+              subPath: p2p.yaml
+              readOnly: true
+          {{- if .Values.p2p.livenessProbe.enabled }}
+          livenessProbe:
+            initialDelaySeconds: {{ .Values.p2p.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.p2p.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ add1 .Values.p2p.livenessProbe.timeoutSeconds }}
+            successThreshold: {{ .Values.p2p.livenessProbe.successThreshold }}
+            failureThreshold: {{ .Values.p2p.livenessProbe.failureThreshold }}
+            tcpSocket:
+              port: 8080
+          {{- end }}
+          {{- if .Values.p2p.readinessProbe.enabled }}
+          readinessProbe:
+            initialDelaySeconds: {{ .Values.p2p.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.p2p.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ add1 .Values.p2p.readinessProbe.timeoutSeconds }}
+            successThreshold: {{ .Values.p2p.readinessProbe.successThreshold }}
+            failureThreshold: {{ .Values.p2p.readinessProbe.failureThreshold }}
+            tcpSocket:
+              port: 8080
+          {{- end }}
+          ports:
+            - name: p2p
+              containerPort: 8080
+              protocol: TCP
+
+      volumes:
+        - name: config
+          configMap:
+            name: {{ template "cardano.configName" . }}-p2p

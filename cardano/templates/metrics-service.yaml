@@ -1,0 +1,16 @@
+{{- if .Values.metrics.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "cardano.fullname" . }}-metrics
+  labels:
+    {{- include "cardano.labels" . | nindent 4 }}
+spec:
+  ports:
+    - port: 30101
+      targetPort: 12789
+      protocol: TCP
+      name: metrics
+  selector:
+    {{- include "cardano.selectorLabels" . | nindent 4 }}
+{{- end }}

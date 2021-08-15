@@ -1,0 +1,22 @@
+{{- $fullName := include "cardano.fullname" . }}
+{{- $namespace := .Release.Namespace }}
+{{- $replicaCount := .Values.producer.replicaCount | int }}
+
+{
+  "Producers": [
+    {
+      "addr": "relays-new.cardano-mainnet.iohk.io",
+      "port": 3001,
+      "valency": 2
+    }
+{{- if .Values.producer.enabled }}
+{{- range $index, $value := until $replicaCount }}
+    ,{
+      "addr": "{{ $fullName }}-producer-{{ $index }}.{{ $fullName }}-headless.{{ $namespace }}.svc.cluster.local",
+      "port": 3001,
+      "valency": 1
+    }
+{{- end }}
+{{- end }}
+  ]
+}

@@ -1,0 +1,34 @@
+{{- $fullName := include "cardano.fullname" . }}
+{{- $p2pHost := printf "%s-p2p-nginx.%s" $fullName .Release.Namespace }}
+---
+listen-addr: ":8080"
+{{- if not .Values.p2p.debug }}
+debug: false
+{{- else }}
+debug: true
+{{- end }}
+read-timeout: "1s"
+testnet:
+{{- if eq .Values.environment.name "testnet" }}
+  enabled: true
+{{- else }}
+  enabled: false
+{{- end }}
+  period-seconds: "60s"
+  fetch-max: 100
+  endpoint: "http://{{- $p2pHost -}}:8080"
+  magic: 1097911063
+  max-peers: {{ .Values.p2p.maxPeers }}
+  default-peer: "relays-new.cardano-testnet.iohkdev.io:3001"
+mainnet:
+{{- if eq .Values.environment.name "mainnet" }}
+  enabled: true
+{{- else }}
+  enabled: false
+{{- end }}
+  period-seconds: "60s"
+  fetch-max: 100
+  endpoint: "http://{{- $p2pHost -}}:8080"
+  magic: 764824073
+  max-peers: {{ .Values.p2p.maxPeers }}
+  default-peer: "relays-new.cardano-mainnet.iohk.io:3001"

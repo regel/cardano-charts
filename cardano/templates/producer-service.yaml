@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "cardano.fullname" . }}-producer
+  labels:
+    {{- include "cardano.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: 3001
+      protocol: TCP
+      name: node
+  selector:
+    app.kubernetes.io/component: producer
+    {{- include "cardano.selectorLabels" . | nindent 4 }}

@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "cardano.fullname" . }}-relay
+  labels:
+    {{- include "cardano.labels" . | nindent 4 }}
+  annotations:
+  {{- with .Values.service.annotations }}
+      {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.type }}
+  externalTrafficPolicy: Local  # See: https://kubernetes.io/docs/tutorials/services/source-ip/
+  sessionAffinity: ClientIP  # connections from a particular client are passed to the same Pod each time
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: 3001
+      protocol: TCP
+      name: node
+  selector:
+    app.kubernetes.io/component: relay
+    {{- include "cardano.selectorLabels" . | nindent 4 }}

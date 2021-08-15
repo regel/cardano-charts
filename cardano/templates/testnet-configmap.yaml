@@ -1,0 +1,18 @@
+{{- if eq .Values.environment.name "testnet" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "cardano.configName" . }}-testnet
+data:
+{{ (tpl (.Files.Glob "files/readiness.sh").AsConfig . ) | indent 2 }}
+{{ (tpl (.Files.Glob "files/p2p.sh").AsConfig . ) | indent 2 }}
+{{ (tpl (.Files.Glob "files/testnet/producer-topology.json").AsConfig . ) | indent 2 }}
+{{ (tpl (.Files.Glob "files/testnet/relay-topology.json").AsConfig . ) | indent 2 }}
+{{ (tpl (.Files.Glob "files/testnet/config.json").AsConfig . ) | indent 2 }}
+binaryData:
+{{- $root := . }}
+{{- $location := "files/testnet/*.json.gz" }}
+{{- range $path, $bytes := .Files.Glob $location }}
+  {{ base $path }}: {{ $root.Files.Get $path | b64enc | quote }}
+{{- end }}
+{{- end }}

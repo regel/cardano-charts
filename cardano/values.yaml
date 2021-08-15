@@ -1,0 +1,425 @@
+## @section Global parameters
+## Global Docker image parameters
+## Please, note that this will override the image parameters, including dependencies, configured to use the global value
+## Current available global Docker image parameters: storageClass
+
+# global.storageClass -- Global StorageClass for Persistent Volume(s)
+global:
+  storageClass:
+  redis:
+    servicePort: 6379
+
+redis:
+  # -- Single service exposed (redis-master)
+  architecture: standalone
+  networkPolicy:
+    enabled: true
+    allowExternal: false
+  master:
+    persistence:
+      enabled: false
+  replica:
+    replicaCount: 0
+    persistence:
+      enabled: false
+  auth:
+    username: ""
+    existingPasswordSecret: '{{ .Release.Name }}-auth'
+
+image:
+  repository: inputoutput/cardano-node
+  pullPolicy: IfNotPresent
+  # -- Overrides the image tag whose default is the chart appVersion. See [here](https://hub.docker.com/r/inputoutput/cardano-node/tags?page=1&ordering=last_updated) the full list of tags.
+  tag: "1.29.0"
+
+busybox:
+  repository: busybox
+  pullPolicy: IfNotPresent
+  tag: ""
+
+liveness:
+  repository: alpine
+  pullPolicy: IfNotPresent
+  tag: "3.12"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # -- Specifies whether a service account should be created
+  create: true
+  # -- Annotations to add to the service account
+  annotations: {}
+  # -- The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations:
+  prometheus.io/scrape: 'true'
+  prometheus.io/port: '12789'
+
+podSecurityContext:
+  fsGroup: 1001
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+
+service:
+  annotations:
+    # service.annotations."service.beta.kubernetes.io/azure-dns-label-name" -- Hostname to be assigned to the ELB for the service
+    service.beta.kubernetes.io/azure-dns-label-name: stupidchess
+  type: LoadBalancer
+  port: 6000
+
+environment:
+  # -- name of the Cardano network to use. Either 'testnet' or 'mainnet'
+  name: testnet
+
+# -- name of an existing secret that contains all of the required secrets
+existingSecret: '{{ .Release.Name }}-auth'
+
+
+secrets:
+  # -- KES skey. Also called  "hot" key, is a node operational key that authenticates who you are. You specify the validity of the KES key using the start time and key period parameters and this KES key needs to be updated every 90 days. 
+  kesSkey: "CHANGEME"
+  # -- VRF skey. Controls your participation in the slot leader selection process. 
+  vrfSkey: "CHANGEME"
+  # -- Operational node certificate:  Represent the link between the operator's offline key and their operational key. A certificate's job is to check whether or not an operational key is valid, to prevent malicious interference. The certificate identifies the current operational key, and is signed by the offline key. 
+  nodeCert: "CHANGEME"
+  # -- Redis PubSub service username 
+  redisUsername: ""
+  # -- Redis PubSub service password 
+  redisPassword: ""
+
+
+metrics:
+  # -- Start a prometheus exporter to expose metrics
+  enabled: false
+  # -- Prometheus Service Monitor
+  # ref: https://github.com/coreos/prometheus-operator
+  #      https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#endpoint
+  serviceMonitor:
+    # -- Create ServiceMonitor resource(s) for scraping metrics using PrometheusOperator
+    enabled: false
+    # -- The namespace in which the ServiceMonitor will be created
+    namespace: ""
+    # -- The interval at which metrics should be scraped
+    interval: 30s
+    # -- The timeout after which the scrape is ended
+    scrapeTimeout: ""
+    # -- Metrics RelabelConfigs to apply to samples before scraping.
+    relabellings: []
+    # -- Metrics RelabelConfigs to apply to samples before ingestion.
+    metricRelabelings: []
+    # -- Specify honorLabels parameter to add the scrape endpoint
+    honorLabels: false
+    # -- Additional labels that can be used so ServiceMonitor resource(s) can be discovered by Prometheus
+    additionalLabels:
+      release: prometheus
+
+
+# -- Network Policy configuration
+# ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/
+# recipes: https://github.com/ahmetb/kubernetes-network-policy-recipes
+networkPolicy:
+  # -- Enable creation of NetworkPolicy resources
+  enabled: true
+
+
+# -- P2P discovery configuration
+# ref: https://github.com/regel/cardano-p2p
+p2p:
+  replicaCount: 1
+
+  # -- Repository of the cardano-p2p image
+  # ref: https://hub.docker.com/r/regel/cardano-p2p
+  repository: regel/cardano-p2p
+  pullPolicy: IfNotPresent
+  tag: "v0.0.12"
+  # -- Enable peer to peer Cardano node discovery
+  enabled: true
+  # -- Use 'clio' to push blockNo to the CLIO service
+  clioEnabled: true
+
+  debug: false
+  topic: "p2p"
+  ipVersion: 4
+  maxPeers: 10
+  ekgTimeout: 5
+
+  livenessProbe:
+    # -- Enable livenessProbe on p2p node
+    enabled: true
+    # -- Initial delay seconds for livenessProbe
+    initialDelaySeconds: 60
+    # -- Period seconds for livenessProbe
+    periodSeconds: 10
+    # -- Timeout seconds for livenessProbe
+    timeoutSeconds: 1
+    # -- Success threshold for livenessProbe
+    successThreshold: 1
+    # -- Failure threshold for livenessProbe
+    failureThreshold: 1
+
+  readinessProbe:
+    # -- Enable readinessProbe on p2p nginx node
+    enabled: true
+    # -- Initial delay seconds for readinessProbe
+    initialDelaySeconds: 600
+    # -- Period seconds for readinessProbe
+    periodSeconds: 10
+    # -- Timeout seconds for readinessProbe
+    timeoutSeconds: 1
+    # -- Success threshold for readinessProbe
+    successThreshold: 1
+    # -- Failure threshold for readinessProbe
+    failureThreshold: 10
+
+  service:
+    annotations: {}
+    type: ClusterIP
+    port: 6001
+
+
+relay:
+  replicaCount: 1
+
+  startupProbe:
+    # -- Enable startupProbe on Relay nodes
+    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
+    enabled: true
+    # -- Initial delay seconds for startupProbe
+    initialDelaySeconds: 60
+    # -- Period seconds for startupProbe
+    periodSeconds: 60
+    # -- Timeout seconds for startupProbe
+    timeoutSeconds: 5
+    # -- Success threshold for startupProbe
+    successThreshold: 1
+    # -- Failure threshold for startupProbe
+    # failureThreshold * periodSeconds = 24 hours and must be > than time to download the blockchain
+    failureThreshold: 1440  
+
+  # -- Configure extra options for Cardano relay containers' liveness and readiness probes
+  livenessProbe:
+    # -- Enable livenessProbe on Relay nodes
+    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
+    enabled: true
+    # -- Initial delay seconds for livenessProbe
+    initialDelaySeconds: 20
+    # -- Period seconds for livenessProbe
+    periodSeconds: 60
+    # -- Timeout seconds for livenessProbe
+    timeoutSeconds: 5
+    # -- Success threshold for livenessProbe
+    successThreshold: 1
+    # -- Failure threshold for livenessProbe
+    failureThreshold: 5
+    # -- Enable readinessProbe on Relay nodes
+  readinessProbe:
+    enabled: true
+    # -- Initial delay seconds for readinessProbe
+    initialDelaySeconds: 20
+    # -- Period seconds for readinessProbe
+    periodSeconds: 5
+    # -- Timeout seconds for readinessProbe
+    timeoutSeconds: 1
+    # -- Success threshold for readinessProbe
+    successThreshold: 1
+    # -- Failure threshold for readinessProbe
+    failureThreshold: 5
+
+  # -- Cardano relay resource requests and limits
+  # ref: http://kubernetes.io/docs/user-guide/compute-resources/
+  resources:
+    # -- The resources limits for the Cardano relay containers
+    limits:
+      cpu: "1"
+      memory: "2048Mi"
+    # -- The requested resources for the Cardano relay containers
+    requests:
+      cpu: "100m"
+      memory: "512Mi"
+
+  # -- Share a single process namespace between all of the containers in Cardano relay pods
+  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/
+  shareProcessNamespace: false
+  # -- Pod affinity preset. Ignored if `master.affinity` is set. Allowed values: `soft` or `hard`
+  # ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  podAffinityPreset: ""
+  # -- Pod anti-affinity preset. Ignored if `master.affinity` is set. Allowed values: `soft` or `hard`
+  # ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  podAntiAffinityPreset: soft
+  # -- Node master.affinity preset
+  # ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
+  nodeAffinityPreset:
+    # -- Node affinity preset type. Ignored if `master.affinity` is set. Allowed values: `soft` or `hard`
+    type: ""
+    # -- Node label key to match. Ignored if `master.affinity` is set
+    key: ""
+    # -- Node label values to match. Ignored if `master.affinity` is set
+    # E.g.
+    # values:
+    #   - e2e-az1
+    #   - e2e-az2
+    values: []
+  # -- Affinity for Cardano relay pods assignment
+  # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+  # NOTE: `master.podAffinityPreset`, `master.podAntiAffinityPreset`, and `master.nodeAffinityPreset` will be ignored when it's set
+  affinity: {}
+  # -- Node labels for Cardano relay pods assignment
+  # ref: https://kubernetes.io/docs/user-guide/node-selection/
+  nodeSelector: {}
+  # -- Tolerations for Cardano relay pods assignment
+  # ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+  tolerations: []
+  # -- Spread Constraints for Cardano relay pod assignment
+  # ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/
+  # E.g.
+  # spreadConstraints:
+  #   - maxSkew: 1
+  #     topologyKey: node
+  #     whenUnsatisfiable: DoNotSchedule
+  spreadConstraints: {}
+  # -- Integer setting the termination grace period for the cardano-relay pods
+  terminationGracePeriodSeconds: 30
+
+
+producer:
+  replicaCount: 1
+  enabled: true
+
+  startupProbe:
+    # -- Enable startupProbe on Cardano producer nodes
+    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
+    enabled: true
+    # -- Initial delay seconds for startupProbe
+    initialDelaySeconds: 60
+    # -- Period seconds for startupProbe
+    periodSeconds: 60
+    # -- Timeout seconds for startupProbe
+    timeoutSeconds: 5
+    # -- Success threshold for startupProbe
+    successThreshold: 1
+    # -- Failure threshold for startupProbe
+    failureThreshold: 360  # failureThreshold * periodSeconds = 6 hours. Reaching epoch 208 is approx 4 hours
+
+  # -- Configure extra options for Cardano producer containers' liveness and readiness probes
+  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
+  livenessProbe:
+    # -- Enable livenessProbe on Cardano producer nodes
+    enabled: true
+    # -- Initial delay seconds for livenessProbe
+    initialDelaySeconds: 120
+    # -- Period seconds for livenessProbe
+    periodSeconds: 60
+    # -- Timeout seconds for livenessProbe
+    timeoutSeconds: 5
+    # -- Success threshold for livenessProbe
+    successThreshold: 1
+    # -- Failure threshold for livenessProbe
+    failureThreshold: 1
+  readinessProbe:
+    # -- Enable readinessProbe on Cardano producer nodes
+    enabled: true
+    # -- Initial delay seconds for readinessProbe
+    initialDelaySeconds: 60
+    # -- Period seconds for readinessProbe
+    periodSeconds: 60
+    # -- Timeout seconds for readinessProbe
+    timeoutSeconds: 1
+    # -- Success threshold for readinessProbe
+    successThreshold: 1
+    # -- Failure threshold for readinessProbe
+    failureThreshold: 5
+  # -- Cardano producer resource requests and limits
+  # ref: http://kubernetes.io/docs/user-guide/compute-resources/
+  resources:
+    # -- The resources limits for the Cardano producer containers
+    limits:
+      cpu: "1"
+      memory: "2048Mi"
+    # -- The requested resources for the Cardano producer containers
+    requests:
+      cpu: "100m"
+      memory: "512Mi"
+  # -- Share a single process namespace between all of the containers in Cardano producer pods
+  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/
+  shareProcessNamespace: false
+  # -- Pod affinity preset. Ignored if `master.affinity` is set. Allowed values: `soft` or `hard`
+  # ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  podAffinityPreset: ""
+  # -- Pod anti-affinity preset. Ignored if `master.affinity` is set. Allowed values: `soft` or `hard`
+  # ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  podAntiAffinityPreset: soft
+  # -- Node master.affinity preset
+  # ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
+  nodeAffinityPreset:
+    # -- Node affinity preset type. Ignored if `master.affinity` is set. Allowed values: `soft` or `hard`
+    type: ""
+    # -- Node label key to match. Ignored if `master.affinity` is set
+    key: ""
+    # -- Node label values to match. Ignored if `master.affinity` is set
+    # E.g.
+    # values:
+    #   - e2e-az1
+    #   - e2e-az2
+    values: []
+  # -- Affinity for Cardano producer pods assignment
+  # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+  # NOTE: `master.podAffinityPreset`, `master.podAntiAffinityPreset`, and `master.nodeAffinityPreset` will be ignored when it's set
+  affinity: {}
+  # -- master.nodeSelector Node labels for Cardano producer pods assignment
+  # ref: https://kubernetes.io/docs/user-guide/node-selection/
+  nodeSelector: {}
+  # -- master.tolerations Tolerations for Cardano producer pods assignment
+  # ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+  tolerations: []
+  # -- master.spreadConstraints Spread Constraints for Cardano producer pod assignment
+  # ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/
+  # E.g.
+  # spreadConstraints:
+  #   - maxSkew: 1
+  #     topologyKey: node
+  #     whenUnsatisfiable: DoNotSchedule
+  spreadConstraints: {}
+  # -- Integer setting the termination grace period for the cardano-producer pods
+  terminationGracePeriodSeconds: 30
+  securityContext: {}
+#    runAsNonRoot: true
+#    runAsUser: 1001
+
+
+persistence:
+  # -- Enable persistence using PVC
+  enabled: true
+  # -- Provide an existing `PersistentVolumeClaim`, the value is evaluated as a template.
+  # If defined, PVC must be created manually before volume will be bound
+  # The value is evaluated as a template, so, for example, the name can depend on .Release or .Chart
+  existingClaim:
+  # -- The path the volume will be mounted at
+  mountPath: /data
+  # -- The subdirectory of the volume to mount to
+  # Useful in dev environments and one PV for multiple services
+  subPath: ''
+  # -- PVC Storage Class for data volume
+  # If defined, storageClassName: <storageClass>
+  # If set to "-", storageClassName: "", which disables dynamic provisioning
+  # If undefined (the default) or set to null, no storageClassName spec is
+  #   set, choosing the default provisioner.  (gp2 on AWS, standard on
+  #   GKE, AWS & OpenStack)
+  storageClass:
+  # -- PVC Access Mode for data volume
+  accessModes:
+    - ReadWriteOnce
+  # -- PVC Storage Request for data volume
+  size: 8Gi
+  # -- Annotations for the PVC
+  annotations: {}
+  # -- Selector to match an existing Persistent Volume (this value is evaluated as a template)
+  # selector:
+  #   matchLabels:
+  #     app: my-app
+  selector: {}

@@ -1,0 +1,101 @@
+{{- $fullName := include "cardano.fullname" . }}
+{{- $p2pHost := printf "%s-p2p.%s" $fullName .Release.Namespace }}
+
+apiVersion: {{ include "common.capabilities.cronjob.apiVersion" . }}
+kind: CronJob
+metadata:
+  name: {{ .Release.Name }}-topology-updater-pull
+  labels:
+    {{- include "cardano.labels" . | nindent 4 }}
+  annotations:
+  {{- if .Values.commonAnnotations }}
+  {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  schedule: "0 0 */1 * *"
+  concurrencyPolicy: Replace
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          name: {{ .Release.Name }}-topology-updater-pull
+          annotations:
+            checksum/updater: {{ include (print $.Template.BasePath "/topology-updater-configmap.yaml") . | sha256sum }}
+          labels:
+            {{ .Release.Name }}-redis-client: "true"
+            {{- include "cardano.selectorLabels" . | nindent 12 }}
+        spec:
+          serviceAccountName: {{ include "cardano.serviceAccountName" . }}
+          securityContext:
+            {{- toYaml .Values.podSecurityContext | nindent 12 }}
+          restartPolicy: OnFailure
+          initContainers:
+            {{ include "cardano.readiness.waitForEkg" . | nindent 10 }}
+          containers:
+          - name: pull
+            image: "{{- .Values.p2p.repository -}}:{{- .Values.p2p.tag | default .Chart.AppVersion -}}"
+            imagePullPolicy: {{ .Values.p2p.pullPolicy }}
+            resources:
+              limits:
+                cpu: "10m"
+                memory: "64Mi"
+            command: ["/bin/sh", "-c", "set -e; bash -x /topologyUpdater.sh -p"]
+            env:
+            - name: "ENDPOINT"  # Fetch updates from local p2p endpoint
+              value: "http://{{- $p2pHost -}}:{{ .Values.p2p.service.port }}"
+            - name: "TOPIC"  # Publish topo updates to Redis
+              value: {{ .Values.p2p.topic | default "p2p" }}
+            - name: "REDIS_HOST"
+              value: {{ .Release.Name }}-redis-master.{{ .Release.Namespace }}
+            - name: "REDIS_PORT"
+              value: "6379"
+            - name: "REDISCLI_AUTH"
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "cardano.secretName" . }}
+                  key: redis-password
+            - name: "REDIS_USER"
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "cardano.secretName" . }}
+                  key: redis-username
+            - name: "CNODE_PORT"
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ template "cardano.configName" . }}-topology-updater
+                  key: cardanoNodePort
+            - name: "NWMAGIC"
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ template "cardano.configName" . }}-topology-updater
+                  key: networkMagic
+            - name: "IP_VERSION"
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ template "cardano.configName" . }}-topology-updater
+                  key: ipVersion
+            - name: "MAX_PEERS"
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ template "cardano.configName" . }}-topology-updater
+                  key: maxPeers
+            - name: "CUSTOM_PEERS"
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ template "cardano.configName" . }}-topology-updater
+                  key: customPeers
+            - name: "EKG_HOST"
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ template "cardano.configName" . }}-topology-updater
+                  key: ekgHost
+            - name: "EKG_PORT"
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ template "cardano.configName" . }}-topology-updater
+                  key: ekgPort
+            - name: "EKG_TIMEOUT"
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ template "cardano.configName" . }}-topology-updater
+                  key: ekgTimeout

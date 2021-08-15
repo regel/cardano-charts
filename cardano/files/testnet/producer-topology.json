@@ -1,0 +1,15 @@
+{{- $fullName := include "cardano.fullname" . }}
+{{- $namespace := .Release.Namespace }}
+{{- $replicaCount := .Values.relay.replicaCount | int }}
+
+{
+  "Producers": [
+{{- range $index, $value := until $replicaCount }}
+    {
+      "addr": "{{ $fullName }}-relay-{{ $index }}.{{ $fullName }}-headless.{{ $namespace }}.svc.cluster.local",
+      "port": 3001,
+      "valency": 1
+    }{{- if ne (add1 $index) $replicaCount }},{{- end }}
+{{- end }}
+  ]
+}
