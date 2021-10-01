@@ -1,0 +1,66 @@
+{{- if .Values.vault.csi.enabled }}
+{{- $fullName := include "cardano.fullname" . }}
+{{- $spcCold := printf "%s-spc-%s" $fullName "cold" }}
+# The 'admin' pod is detached from the vnet using k8s network policies.
+# Use the 'Calico' plugin when creating the Kubernetes cluster
+# To enforce this design, the pod will be Terminated if it has access to the net
+apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
+kind: Deployment
+metadata:
+  name: "{{ include "cardano.fullname" . }}-admin"
+  labels:
+    app.kubernetes.io/component: admin
+    {{- include "cardano.labels" . | nindent 4 }}
+  annotations:
+  {{- if .Values.commonAnnotations }}
+  {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: admin
+      {{- include "cardano.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+    {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      labels:
+        app.kubernetes.io/component: admin
+        {{- include "cardano.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "cardano.serviceAccountName" . }}
+      securityContext:
+        runAsNonRoot: true
+      containers:
+        - name: admin
+          securityContext:
+            runAsUser: 65532
+          image: "{{- .Values.admin.repository -}}:{{- .Values.admin.tag | default .Chart.AppVersion -}}"
+          imagePullPolicy: {{ .Values.admin.pullPolicy }}
+          resources:
+            limits:
+              cpu: "10m"
+              memory: "64Mi"
+          command: ["/bin/sh", "-c"]
+          args:
+            - 'trap : TERM INT ;
+              (while true; do timeout 10 bash -c "cat < /dev/null > /dev/tcp/8.8.8.8/53" && exit 1; done) & wait'
+          volumeMounts:
+            - name: vault-cold
+              mountPath: "/mnt/secrets-store"
+              readOnly: true
+      volumes:
+        - name: vault-cold
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: {{ $spcCold }}
+{{- end }}

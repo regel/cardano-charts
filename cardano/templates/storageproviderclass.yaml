@@ -1,0 +1,60 @@
+{{- if .Values.vault.csi.enabled }}
+{{- $fullName := include "cardano.fullname" . }}
+{{- $spcHot := printf "%s-spc-%s" $fullName "hot" }}
+{{- $spcCold := printf "%s-spc-%s" $fullName "cold" }}
+
+---
+apiVersion: secrets-store.csi.x-k8s.io/v1alpha1
+kind: SecretProviderClass
+metadata:
+  name: {{ $spcHot }}
+spec:
+  provider: azure
+  parameters:
+    keyvaultName: {{ .Values.vault.csi.hotVaultName }}
+    useVMManagedIdentity: "true"         
+    userAssignedIdentityID: {{ .Values.vault.csi.userAssignedIdentityID }}
+    cloudName: ""
+    objects:  |
+      array:
+        - |
+          objectName: kesSkey
+          objectType: secret
+          objectVersion: ""
+        - |
+          objectName: vrfSkey
+          objectType: secret
+          objectVersion: ""
+        - |
+          objectName: nodeCert
+          objectType: secret
+          objectVersion: ""
+    tenantId: {{ .Values.vault.csi.tenantId }}
+---
+apiVersion: secrets-store.csi.x-k8s.io/v1alpha1
+kind: SecretProviderClass
+metadata:
+  name: {{ $spcCold }}
+spec:
+  provider: azure
+  parameters:
+    keyvaultName: {{ .Values.vault.csi.coldVaultName }}
+    useVMManagedIdentity: "true"         
+    userAssignedIdentityID: {{ .Values.vault.csi.userAssignedIdentityID }}
+    cloudName: ""
+    objects:  |
+      array:
+        - |
+          objectName: coldVkey
+          objectType: secret
+          objectVersion: ""
+        - |
+          objectName: coldSkey
+          objectType: secret
+          objectVersion: ""
+        - |
+          objectName: coldCounter
+          objectType: secret
+          objectVersion: ""
+    tenantId: {{ .Values.vault.csi.tenantId }}
+{{- end }}

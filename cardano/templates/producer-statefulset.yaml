@@ -1,3 +1,6 @@
+{{- $fullName := include "cardano.fullname" . }}
+{{- $spcHot := printf "%s-spc-%s" $fullName "hot" }}
+
 apiVersion: {{ include "common.capabilities.statefulset.apiVersion" . }}
 kind: StatefulSet
 metadata:
@@ -113,9 +116,9 @@ spec:
             - --host-addr 0.0.0.0
             - --port 3001
             - --socket-path /ipc/node.socket
-            - --shelley-kes-key /vault/kes.skey
-            - --shelley-vrf-key /vault/vrf.skey
-            - --shelley-operational-certificate /vault/node.cert
+            - --shelley-kes-key /vault/kesSkey
+            - --shelley-vrf-key /vault/vrfSkey
+            - --shelley-operational-certificate /vault/nodeCert
           volumeMounts:
             - name: readiness-probe
               mountPath: /opt/readiness.sh
@@ -186,10 +189,18 @@ spec:
 
       volumes:
         - name: root-owned-vault
+        {{- if .Values.vault.csi.enabled }}
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: {{ $spcHot }}
+        {{- else }}
           secret:
             secretName: {{ template "cardano.secretName" . }}
         {{- if not .Values.producer.securityContext.runAsNonRoot }}
             defaultMode: 256  # 0400 permissions
+        {{- end }}
         {{- end }}
         - name: vault
           emptyDir:

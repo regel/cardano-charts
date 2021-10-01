@@ -127,3 +127,23 @@ spec:
   - ports:
     - port: 12789
 {{- end }}
+---
+kind: NetworkPolicy
+apiVersion: {{ template "networkPolicy.apiVersion" . }}
+metadata:
+  name: air-gapped  # nothing in, nothing out
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "cardano.labels" . | nindent 4 }}
+  annotations:
+  {{- if .Values.commonAnnotations }}
+  {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  policyTypes:
+  - Egress
+  - Ingress
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: admin
+  ingress: []
+  egress: []
