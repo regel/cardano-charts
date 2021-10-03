@@ -15,6 +15,7 @@ A Helm chart for Kubernetes
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
+| admin | object | `{"pullPolicy":"IfNotPresent","repository":"inputoutput/cardano-node","tag":"1.29.0"}` | The admin pod is a special pod. This pod is air-gapped (nothing in, nothing out) and mounts cold keys from a Vault. Use this pod for admin operations such as KES key signature and node certificate signature |
 | busybox.pullPolicy | string | `"IfNotPresent"` |  |
 | busybox.repository | string | `"busybox"` |  |
 | busybox.tag | string | `""` |  |
@@ -43,7 +44,7 @@ A Helm chart for Kubernetes
 | nameOverride | string | `""` |  |
 | networkPolicy | object | `{"enabled":true}` | Network Policy configuration ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/ recipes: https://github.com/ahmetb/kubernetes-network-policy-recipes |
 | networkPolicy.enabled | bool | `true` | Enable creation of NetworkPolicy resources |
-| p2p | object | `{"clioEnabled":true,"debug":false,"ekgTimeout":5,"enabled":true,"ipVersion":4,"livenessProbe":{"enabled":true,"failureThreshold":1,"initialDelaySeconds":60,"periodSeconds":10,"successThreshold":1,"timeoutSeconds":1},"maxPeers":10,"pullPolicy":"IfNotPresent","readinessProbe":{"enabled":true,"failureThreshold":10,"initialDelaySeconds":600,"periodSeconds":10,"successThreshold":1,"timeoutSeconds":1},"replicaCount":1,"repository":"regel/cardano-p2p","service":{"annotations":{},"port":6001,"type":"ClusterIP"},"tag":"v0.0.12","topic":"p2p"}` | P2P discovery configuration ref: https://github.com/regel/cardano-p2p |
+| p2p | object | `{"clioEnabled":true,"debug":false,"ekgTimeout":5,"enabled":true,"ipVersion":4,"livenessProbe":{"enabled":true,"failureThreshold":1,"initialDelaySeconds":60,"periodSeconds":10,"successThreshold":1,"timeoutSeconds":1},"maxPeers":10,"pullPolicy":"IfNotPresent","readinessProbe":{"enabled":true,"failureThreshold":10,"initialDelaySeconds":600,"periodSeconds":10,"successThreshold":1,"timeoutSeconds":1},"replicaCount":1,"repository":"regel/cardano-p2p","service":{"annotations":{},"port":6001,"type":"ClusterIP"},"tag":"v0.0.14","topic":"p2p"}` | P2P discovery configuration ref: https://github.com/regel/cardano-p2p |
 | p2p.clioEnabled | bool | `true` | Use 'clio' to push blockNo to the CLIO service |
 | p2p.enabled | bool | `true` | Enable peer to peer Cardano node discovery |
 | p2p.livenessProbe.enabled | bool | `true` | Enable livenessProbe on p2p node |
@@ -151,11 +152,8 @@ A Helm chart for Kubernetes
 | relay.startupProbe.timeoutSeconds | int | `5` | Timeout seconds for startupProbe |
 | relay.terminationGracePeriodSeconds | int | `30` | Integer setting the termination grace period for the cardano-relay pods |
 | relay.tolerations | list | `[]` | Tolerations for Cardano relay pods assignment ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/ |
-| secrets.kesSkey | string | `"CHANGEME"` | KES skey. Also called  "hot" key, is a node operational key that authenticates who you are. You specify the validity of the KES key using the start time and key period parameters and this KES key needs to be updated every 90 days.  |
-| secrets.nodeCert | string | `"CHANGEME"` | Operational node certificate:  Represent the link between the operator's offline key and their operational key. A certificate's job is to check whether or not an operational key is valid, to prevent malicious interference. The certificate identifies the current operational key, and is signed by the offline key.  |
 | secrets.redisPassword | string | `""` | Redis PubSub service password  |
 | secrets.redisUsername | string | `""` | Redis PubSub service username  |
-| secrets.vrfSkey | string | `"CHANGEME"` | VRF skey. Controls your participation in the slot leader selection process.  |
 | securityContext.runAsNonRoot | bool | `true` |  |
 | securityContext.runAsUser | int | `1001` |  |
 | service.annotations."service.beta.kubernetes.io/azure-dns-label-name" | string | `"stupidchess"` | Hostname to be assigned to the ELB for the service |
@@ -164,6 +162,11 @@ A Helm chart for Kubernetes
 | serviceAccount.annotations | object | `{}` | Annotations to add to the service account |
 | serviceAccount.create | bool | `true` | Specifies whether a service account should be created |
 | serviceAccount.name | string | `""` | The name of the service account to use. If not set and create is true, a name is generated using the fullname template |
+| vault.csi.coldVaultName | string | `""` | Name of the Azure Key Vault that contains cold keys. Vault secrets are mounted read-only in the admin pod. |
+| vault.csi.enabled | bool | `true` | Enable private key access from a Vault |
+| vault.csi.hotVaultName | string | `""` | Name of the Azure Key Vault that contains hot keys. Vault secrets (kesSkey, vrfSkey, nodeCert) are mounted read-only in cardano-producer pod. |
+| vault.csi.tenantId | string | `""` | Tenant ID containing the Azure Key Vault instance |
+| vault.csi.userAssignedIdentityID | string | `""` | ClientId of the addon-created managed identity |
 
 ----------------------------------------------
 Autogenerated from chart metadata using [helm-docs v1.5.0](https://github.com/norwoodj/helm-docs/releases/v1.5.0)
