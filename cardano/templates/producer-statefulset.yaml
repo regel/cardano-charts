@@ -84,7 +84,20 @@ spec:
             - name: config
               mountPath: /config
               readOnly: true
-
+        {{- if eq .Values.environment.name "mainnet" }}
+        # See cardano-node issue 3238. Genesis file is too large to fit in etcd (1 MB limit)
+        - name: genesis-large
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/bin/sh", "-c"]
+          args:
+            - cp /nix/store/iwq90igv72ihdr9z9nl3m0dsiv0bfh7y-byron-genesis.json /genesis/byron-genesis.json ;
+          volumeMounts:
+            - name: genesis
+              mountPath: /genesis
+        {{- end }}
         {{- if .Values.producer.securityContext.runAsNonRoot }}  # https://github.com/kubernetes/kubernetes/issues/81089
         - name: set-key-ownership
           image: "{{- .Values.busybox.repository -}}:{{- .Values.busybox.tag | default .Chart.AppVersion -}}"
