@@ -33,7 +33,8 @@ Refer to the Cardano forum [guide](https://forum.cardano.org/t/back-to-basics-se
 
 This Cloud Native Helm Chart leverages advanced security features provided in Kubernetes and Cloud vendors extensions. :rotating_light: Ensure that you understand these concepts before using this Chart:
 
-- [Calico](https://docs.microsoft.com/en-us/azure/aks/use-network-policies) plugin: this network plugin in Kubernetes enforces `ingress` and `egress` traffic between pods and external IPs using [Network Policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/) 
+- [Calico](https://docs.microsoft.com/en-us/azure/aks/use-network-policies) plugin: see how this network plugin in Kubernetes enforces `ingress` and `egress` traffic between pods and external IPs using [Network Policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+- Watch this [KubeCon](https://www.youtube.com/watch?v=3gGpMmYeEO8) talk or checkout the recipes on [Network Policies](https://github.com/ahmetb/kubernetes-network-policy-recipes). Credits: Ahmet Balkan, Google
 - Key Vault: all secret keys required to run a Cardano node are stored inside a Vault and only mounted where the least access priviledge applies. The Azure Vault used in this Chart requires the configuration of a [User Assigned Managed Identity](https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview)
 - Run As NonRoot: Containers run using non-root users according to best Docker practices
 
