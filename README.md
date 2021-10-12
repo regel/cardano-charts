@@ -157,3 +157,11 @@ helm upgrade --install pool \
     ./cardano
 ```
 
+#### Query the Blokchain Tip :rocket:
+
+Change the pod namespace and `cardano-cli` options according to the chain id, chart namespace and release name, and run:
+
+```
+kubectl exec -ti -n mainnet mainnet-cardano-relay-0 -c node -- cardano-cli query tip --mainnet
+```
+
