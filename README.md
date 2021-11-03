@@ -3,7 +3,7 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 Contains Helm Charts for operating **the most secure** Cardano nodes in Kubernetes:
-- [cardano](./cardano/README.md)
+- [charts/cardano](./cardano/README.md)
 
 ## Backers :dart: :heart_eyes:
 
@@ -139,6 +139,7 @@ helm install csi-secrets-store-provider-azure/csi-secrets-store-provider-azure -
 Installing this Chart:
 
 ```
+helm repo add cardano https://regel.github.io/cardano-charts
 helm upgrade --install pool \
   --namespace testnet \
   --values cardano/values.yaml \
