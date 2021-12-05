@@ -253,7 +253,7 @@ relay:
     # -- The resources limits for the Cardano relay containers
     limits:
       cpu: "1"
-      memory: "2048Mi"
+      memory: "4096Mi"
     # -- The requested resources for the Cardano relay containers
     requests:
       cpu: "100m"

@@ -253,11 +253,11 @@ relay:
     # -- The resources limits for the Cardano relay containers
     limits:
       cpu: "2"
-      memory: "11Gi"
+      memory: "12Gi"
     # -- The requested resources for the Cardano relay containers
     requests:
       cpu: "100m"
-      memory: "11Gi"
+      memory: "10Gi"
 
   # -- Share a single process namespace between all of the containers in Cardano relay pods
   # ref: https://kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/
@@ -356,11 +356,11 @@ producer:
     # -- The resources limits for the Cardano producer containers
     limits:
       cpu: "1"
-      memory: "11Gi"
+      memory: "12Gi"
     # -- The requested resources for the Cardano producer containers
     requests:
       cpu: "100m"
-      memory: "11Gi"
+      memory: "10Gi"
   # -- Share a single process namespace between all of the containers in Cardano producer pods
   # ref: https://kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/
   shareProcessNamespace: false

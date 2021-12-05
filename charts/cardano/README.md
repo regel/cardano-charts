@@ -142,8 +142,8 @@ A Cardano Helm chart for Kubernetes
 | relay.readinessProbe.successThreshold | int | `1` | Success threshold for readinessProbe |
 | relay.readinessProbe.timeoutSeconds | int | `1` | Timeout seconds for readinessProbe |
 | relay.replicaCount | int | `1` |  |
-| relay.resources | object | `{"limits":{"cpu":"1","memory":"2048Mi"},"requests":{"cpu":"100m","memory":"512Mi"}}` | Cardano relay resource requests and limits ref: http://kubernetes.io/docs/user-guide/compute-resources/ |
-| relay.resources.limits | object | `{"cpu":"1","memory":"2048Mi"}` | The resources limits for the Cardano relay containers |
+| relay.resources | object | `{"limits":{"cpu":"1","memory":"4096Mi"},"requests":{"cpu":"100m","memory":"512Mi"}}` | Cardano relay resource requests and limits ref: http://kubernetes.io/docs/user-guide/compute-resources/ |
+| relay.resources.limits | object | `{"cpu":"1","memory":"4096Mi"}` | The resources limits for the Cardano relay containers |
 | relay.resources.requests | object | `{"cpu":"100m","memory":"512Mi"}` | The requested resources for the Cardano relay containers |
 | relay.shareProcessNamespace | bool | `false` | Share a single process namespace between all of the containers in Cardano relay pods ref: https://kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/ |
 | relay.spreadConstraints | object | `{}` | Spread Constraints for Cardano relay pod assignment ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/ E.g. spreadConstraints:   - maxSkew: 1     topologyKey: node     whenUnsatisfiable: DoNotSchedule |
