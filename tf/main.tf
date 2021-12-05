@@ -12,7 +12,9 @@ terraform {
     http = {
       version = "~> 2.1" 
     }
-    helm = {}
+    helm = {
+      version = "=2.4.1"
+    }
     kubernetes = {}
   }
   backend "azurerm" {
