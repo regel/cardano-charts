@@ -109,7 +109,7 @@ resource "azurerm_kubernetes_cluster" "cardano" {
 resource "azurerm_kubernetes_cluster_node_pool" "user" {
   name                  = "user"
   kubernetes_cluster_id = azurerm_kubernetes_cluster.cardano.id
-  vm_size               = "Standard_E2_v4"
+  vm_size               = "Standard_E4s_v4"
   node_count            = 1
   vnet_subnet_id        = azurerm_subnet.user.id
 }
