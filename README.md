@@ -3,7 +3,7 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 Contains Helm Charts for operating **the most secure** Cardano nodes in Kubernetes:
-- [charts/cardano](./cardano/README.md)
+- [charts/cardano](./charts/cardano/README.md)
 
 This Chart solves common pain points of Cardano node operations:
 - Long bootstrap time for new nodes: this chart restores testnet data at epoch 172 and mainnet data at epoch 306
