@@ -1,8 +1,8 @@
 # cardano
 
-![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.27.0](https://img.shields.io/badge/AppVersion-1.27.0-informational?style=flat-square)
+![Version: 0.1.3](https://img.shields.io/badge/Version-0.1.3-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.30.1](https://img.shields.io/badge/AppVersion-1.30.1-informational?style=flat-square)
 
-A Helm chart for Kubernetes
+A Cardano Helm chart for Kubernetes
 
 ## Requirements
 
@@ -15,7 +15,7 @@ A Helm chart for Kubernetes
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| admin | object | `{"pullPolicy":"IfNotPresent","repository":"inputoutput/cardano-node","tag":"1.29.0"}` | The admin pod is a special pod. This pod is air-gapped (nothing in, nothing out) and mounts cold keys from a Vault. Use this pod for admin operations such as KES key signature and node certificate signature |
+| admin | object | `{"pullPolicy":"IfNotPresent","repository":"inputoutput/cardano-node","tag":"1.30.1"}` | The admin pod is a special pod. This pod is air-gapped (nothing in, nothing out) and mounts cold keys from a Vault. Use this pod for admin operations such as KES key signature and node certificate signature |
 | busybox.pullPolicy | string | `"IfNotPresent"` |  |
 | busybox.repository | string | `"busybox"` |  |
 | busybox.tag | string | `""` |  |
@@ -26,7 +26,7 @@ A Helm chart for Kubernetes
 | global.storageClass | string | `nil` | Global StorageClass for Persistent Volume(s) |
 | image.pullPolicy | string | `"IfNotPresent"` |  |
 | image.repository | string | `"inputoutput/cardano-node"` |  |
-| image.tag | string | `"1.29.0"` | Overrides the image tag whose default is the chart appVersion. See [here](https://hub.docker.com/r/inputoutput/cardano-node/tags?page=1&ordering=last_updated) the full list of tags. |
+| image.tag | string | `"1.30.1"` | Overrides the image tag whose default is the chart appVersion. See [here](https://hub.docker.com/r/inputoutput/cardano-node/tags?page=1&ordering=last_updated) the full list of tags. |
 | imagePullSecrets | list | `[]` |  |
 | liveness.pullPolicy | string | `"IfNotPresent"` |  |
 | liveness.repository | string | `"alpine"` |  |
@@ -67,6 +67,9 @@ A Helm chart for Kubernetes
 | persistence.mountPath | string | `"/data"` | The path the volume will be mounted at |
 | persistence.selector | object | `{}` | Selector to match an existing Persistent Volume (this value is evaluated as a template) selector:   matchLabels:     app: my-app |
 | persistence.size | string | `"8Gi"` | PVC Storage Request for data volume |
+| persistence.sourceFile | object | `{"enabled":false,"guid":""}` | Source file to download and uncompress if the PVC is empty |
+| persistence.sourceFile.enabled | bool | `false` | Enable restore of the ledger database |
+| persistence.sourceFile.guid | string | `""` | Public id of the tar gz file in Google Drive |
 | persistence.storageClass | string | `nil` | PVC Storage Class for data volume If defined, storageClassName: <storageClass> If set to "-", storageClassName: "", which disables dynamic provisioning If undefined (the default) or set to null, no storageClassName spec is   set, choosing the default provisioner.  (gp2 on AWS, standard on   GKE, AWS & OpenStack) |
 | persistence.subPath | string | `""` | The subdirectory of the volume to mount to Useful in dev environments and one PV for multiple services |
 | podAnnotations."prometheus.io/port" | string | `"12789"` |  |
