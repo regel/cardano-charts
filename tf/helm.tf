@@ -6,7 +6,7 @@ resource "random_password" "redis" {
 
 resource "helm_release" "csi" {
   name       = "csi-secrets-store-provider-azure"
-
+  version    = "1.0.0"
   repository = "https://raw.githubusercontent.com/Azure/secrets-store-csi-driver-provider-azure/master/charts"
   chart      = "csi-secrets-store-provider-azure"
   lint       = false
@@ -29,7 +29,17 @@ resource "helm_release" "prometheus" {
   create_namespace = true
 }
 
+locals {
+  dns_label_name = var.dns_label == "" ? random_pet.this.id : var.dns_label
+}
+
+
 resource "helm_release" "cardano" {
+  depends_on = [
+    helm_release.csi,
+    kubernetes_namespace.cardano
+  ]
+
   name       = "testnet"
   repository = "https://regel.github.io/cardano-charts"
   chart      = "cardano"
@@ -38,58 +48,60 @@ resource "helm_release" "cardano" {
   create_namespace = true
   wait = false  # do not wait for readiness
 
-  set {
-    name  = "secrets.redisUsername"
-    value = "cardano"
-  }
+  values = [
+    <<EOF
+secrets:
+  redisUsername: "cardano"
+
+redis:
+  auth:
+    username: "cardano"
+
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    namespace: "${helm_release.prometheus.namespace}"
+
+vault:
+  csi:
+    enabled: true
+    coldVaultName: "${azurerm_key_vault.cardano.name}"
+    hotVaultName: "${azurerm_key_vault.cardano.name}"
+    tenantId: "${var.tenant_id}"
+    userAssignedIdentityID: "${azurerm_kubernetes_cluster.cardano.kubelet_identity[0].client_id}"
+
+service:
+  beta.kubernetes.io/azure-dns-label-name: "${local.dns_label_name}"
+
+environment:
+  name: testnet
+
+persistence:
+  enabled: true
+  # -- Provide an existing `PersistentVolumeClaim`, the value is evaluated as a template.
+  existingClaim:
+  mountPath: /data
+  # Starting in Kubernetes version 1.21, Kubernetes will use CSI drivers only and by default.
+  storageClass: "managed-csi"
+  accessModes:
+    - ReadWriteOnce
+  # -- PVC Storage Request for data volume
+  size: 32Gi
+  annotations: {}
+  selector: {}
+  sourceFile:
+    enabled: true
+    guid: 13ioPLPad3auIcBZgp5jJeukJcnq9_cTj
+EOF
+  ]
+
   set_sensitive {
     name  = "secrets.redisPassword"
     value = random_password.redis.result
   }
-  set {
-    name  = "redis.auth.username"
-    value = "cardano"
-  }
   set_sensitive {
     name  = "redis.auth.password"
     value = random_password.redis.result
-  }
-  set {
-    name  = "metrics.enabled"
-    value = "true"
-  }
-  set {
-    name  = "metrics.serviceMonitor.enabled"
-    value = "true"
-  }
-  set {
-    name  = "metrics.serviceMonitor.namespace"
-    value = "prometheus"
-  }
-  set {
-    name  = "vault.csi.enabled"
-    value = "true"
-  }
-  set {
-    name  = "vault.csi.coldVaultName"
-    value = azurerm_key_vault.cardano.name
-  }
-  set {
-    name  = "vault.csi.hotVaultName"
-    value = azurerm_key_vault.cardano.name
-  }
-  set {
-    name  = "vault.csi.userAssignedIdentityID"
-    value = ""  # If empty, then defaults to use the SystemAssigned identity on the cluster
-    type  = "string"
-  }
-  set {
-    name  = "vault.csi.tenantId"
-    value = var.tenant_id
-  }
-  set {
-    name  = "service.beta.kubernetes.io/azure-dns-label-name"
-    value = var.dns_label == "" ? random_pet.this.id : var.dns_label
-    type  = "string"
   }
 }

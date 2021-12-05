@@ -78,3 +78,15 @@ variable "tenant_id" {
   type        = string
   description = "Tenant id"
 }
+
+variable "velero_client_id" {
+  type        = string
+  description = "TF_SP_ID set in setup-velero helper script"
+}
+
+variable "velero_client_secret" {
+  type        = string
+  description = "TF_SP_SECRET set in setup-velero script"
+  sensitive   = true
+}
+
