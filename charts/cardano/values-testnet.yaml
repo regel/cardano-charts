@@ -82,7 +82,7 @@ service:
 
 environment:
   # -- name of the Cardano network to use. Either 'testnet' or 'mainnet'
-  name: mainnet
+  name: testnet
 
 # -- name of an existing secret that contains all of the required secrets
 existingSecret: '{{ .Release.Name }}-auth'
@@ -252,12 +252,12 @@ relay:
   resources:
     # -- The resources limits for the Cardano relay containers
     limits:
-      cpu: "2"
-      memory: "11Gi"
+      cpu: "1"
+      memory: "2048Mi"
     # -- The requested resources for the Cardano relay containers
     requests:
       cpu: "100m"
-      memory: "11Gi"
+      memory: "512Mi"
 
   # -- Share a single process namespace between all of the containers in Cardano relay pods
   # ref: https://kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/
@@ -356,11 +356,11 @@ producer:
     # -- The resources limits for the Cardano producer containers
     limits:
       cpu: "1"
-      memory: "11Gi"
+      memory: "2048Mi"
     # -- The requested resources for the Cardano producer containers
     requests:
       cpu: "100m"
-      memory: "11Gi"
+      memory: "512Mi"
   # -- Share a single process namespace between all of the containers in Cardano producer pods
   # ref: https://kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/
   shareProcessNamespace: false
@@ -431,7 +431,7 @@ persistence:
   accessModes:
     - ReadWriteOnce
   # -- PVC Storage Request for data volume
-  size: 64Gi
+  size: 8Gi
   # -- Annotations for the PVC
   annotations: {}
   # -- Selector to match an existing Persistent Volume (this value is evaluated as a template)
@@ -439,8 +439,9 @@ persistence:
   #   matchLabels:
   #     app: my-app
   selector: {}
+  # -- Source file to download and uncompress if the PVC is empty
   sourceFile:
     # -- Enable restore of the ledger database
     enabled: true
-    # -- Archive of Cardano /data/db at mainnet epoch 306
-    guid: 1BKbddz8LR37T4W13jL-3nI4rGPVU-yIC
+    # -- Archive of Cardano /data/db at testnet epoch 172
+    guid: 13ioPLPad3auIcBZgp5jJeukJcnq9_cTj

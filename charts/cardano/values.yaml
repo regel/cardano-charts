@@ -439,3 +439,9 @@ persistence:
   #   matchLabels:
   #     app: my-app
   selector: {}
+  # -- Source file to download and uncompress if the PVC is empty
+  sourceFile:
+    # -- Enable restore of the ledger database
+    enabled: false
+    # -- Public id of the tar gz file in Google Drive
+    guid: ''

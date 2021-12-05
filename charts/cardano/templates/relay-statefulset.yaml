@@ -97,6 +97,28 @@ spec:
             - name: genesis
               mountPath: /genesis
         {{- end }}
+        {{- if and .Values.persistence.enabled .Values.persistence.sourceFile.enabled }}
+        - name: restore
+          image: "python:3"
+          command: ["/bin/sh", "-c"]
+          args:
+            - set -e ;
+              trap "rm -f {{ .Values.persistence.mountPath }}/db.tar.gz" EXIT ;
+              if [ -d "{{ .Values.persistence.mountPath }}/db" ]; then
+                exit 0 ;
+              fi ;
+              pip install gdown ;
+              gdown --id "{{ .Values.persistence.sourceFile.guid }}" -O "{{ .Values.persistence.mountPath }}/db.tar.gz" ;
+              tar -xzf "{{ .Values.persistence.mountPath }}/db.tar.gz" -C "{{ .Values.persistence.mountPath }}" ;
+              {{- if .Values.securityContext.runAsNonRoot }}
+              chown -R {{ .Values.securityContext.runAsUser }} "{{ .Values.persistence.mountPath }}/db" ;
+              {{- end }}
+          volumeMounts:
+            - name: data
+              mountPath: {{ .Values.persistence.mountPath }}
+              subPath: {{ .Values.persistence.subPath }}
+        {{- end }}
+
       dnsConfig:
         options:
           - name: ndots
