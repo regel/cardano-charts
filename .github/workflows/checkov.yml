@@ -1,0 +1,19 @@
+on: [push]
+jobs:
+  checkov-job:
+    runs-on: ubuntu-latest
+    name: checkov-action
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@master
+
+      - name: Run Checkov action
+        id: checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: charts/cardano 
+          skip_check: CKV_K8S_21,CKV_K8S_10,CKV_K8S_11,CKV_K8S_12,CKV_K8S_13  # optional: skip a specific check_id. can be comma separated list
+          quiet: true
+          soft_fail: true # optional: do not return an error code if there are failed checks
+          framework: helm
+          output_format: github_failed_only
