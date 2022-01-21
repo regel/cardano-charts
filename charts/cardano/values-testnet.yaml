@@ -30,14 +30,14 @@ image:
   repository: inputoutput/cardano-node
   pullPolicy: IfNotPresent
   # -- Overrides the image tag whose default is the chart appVersion. See [here](https://hub.docker.com/r/inputoutput/cardano-node/tags?page=1&ordering=last_updated) the full list of tags.
-  tag: "1.30.1"
+  tag: "1.33.1"
 
 # -- The admin pod is a special pod. This pod is air-gapped (nothing in, nothing out) and mounts cold keys from a Vault.
 # Use this pod for admin operations such as KES key signature and node certificate signature
 admin:
   repository: inputoutput/cardano-node
   pullPolicy: IfNotPresent
-  tag: "1.30.1"
+  tag: "1.33.1"
 
 busybox:
   repository: busybox
@@ -443,5 +443,5 @@ persistence:
   sourceFile:
     # -- Enable restore of the ledger database
     enabled: true
-    # -- Archive of Cardano /data/db at testnet epoch 172
-    guid: 13ioPLPad3auIcBZgp5jJeukJcnq9_cTj
+    # -- Archive of Cardano /data/db at testnet epoch 181
+    guid: 1y2KHOMHh4f3yuAsG926tWue0o2rtETol
