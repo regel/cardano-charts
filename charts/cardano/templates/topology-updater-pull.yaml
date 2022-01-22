@@ -8,6 +8,8 @@ metadata:
   labels:
     {{- include "cardano.labels" . | nindent 4 }}
   annotations:
+    checkov.io/skip1: CKV_K8S_28="NET_RAW"
+    checkov.io/skip2: CKV_K8S_37="admission of containers with capabilities."
   {{- if .Values.commonAnnotations }}
   {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
   {{- end }}
@@ -25,7 +27,7 @@ spec:
             {{ .Release.Name }}-redis-client: "true"
             {{- include "cardano.selectorLabels" . | nindent 12 }}
         spec:
-          serviceAccountName: {{ include "cardano.serviceAccountName" . }}
+          automountServiceAccountToken: false
           securityContext:
             {{- toYaml .Values.podSecurityContext | nindent 12 }}
           restartPolicy: OnFailure

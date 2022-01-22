@@ -44,6 +44,11 @@ busybox:
   pullPolicy: IfNotPresent
   tag: ""
 
+curl:
+  repository: "curlimages/curl"
+  pullPolicy: IfNotPresent
+  tag: "7.80.0"
+
 liveness:
   repository: alpine
   pullPolicy: IfNotPresent
@@ -53,25 +58,17 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
-serviceAccount:
-  # -- Specifies whether a service account should be created
-  create: true
-  # -- Annotations to add to the service account
-  annotations: {}
-  # -- The name of the service account to use.
-  # If not set and create is true, a name is generated using the fullname template
-  name: ""
-
 podAnnotations:
   prometheus.io/scrape: 'true'
   prometheus.io/port: '12789'
 
 podSecurityContext:
-  fsGroup: 1001
-
-securityContext:
   runAsNonRoot: true
-  runAsUser: 1001
+  runAsUser: 65532
+  fsGroup: 65532
+  seccompProfile:
+    type: RuntimeDefault
+
 
 service:
   annotations:
@@ -443,5 +440,6 @@ persistence:
   sourceFile:
     # -- Enable restore of the ledger database
     enabled: false
-    # -- Public id of the tar gz file in Google Drive
-    guid: ''
+    # -- download url of the ledger database archive. The tar.gz archive must contain the content of cardano 'db' directory.
+    # Store this file on a CDN or Azure Blob storage container to speed up download times.
+    url: ""

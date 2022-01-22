@@ -19,6 +19,9 @@ A Cardano Helm chart for Kubernetes
 | busybox.pullPolicy | string | `"IfNotPresent"` |  |
 | busybox.repository | string | `"busybox"` |  |
 | busybox.tag | string | `""` |  |
+| curl.pullPolicy | string | `"IfNotPresent"` |  |
+| curl.repository | string | `"curlimages/curl"` |  |
+| curl.tag | string | `"7.80.0"` |  |
 | environment.name | string | `"testnet"` | name of the Cardano network to use. Either 'testnet' or 'mainnet' |
 | existingSecret | string | `"{{ .Release.Name }}-auth"` | name of an existing secret that contains all of the required secrets |
 | fullnameOverride | string | `""` |  |
@@ -67,14 +70,17 @@ A Cardano Helm chart for Kubernetes
 | persistence.mountPath | string | `"/data"` | The path the volume will be mounted at |
 | persistence.selector | object | `{}` | Selector to match an existing Persistent Volume (this value is evaluated as a template) selector:   matchLabels:     app: my-app |
 | persistence.size | string | `"8Gi"` | PVC Storage Request for data volume |
-| persistence.sourceFile | object | `{"enabled":false,"guid":""}` | Source file to download and uncompress if the PVC is empty |
+| persistence.sourceFile | object | `{"enabled":false,"url":""}` | Source file to download and uncompress if the PVC is empty |
 | persistence.sourceFile.enabled | bool | `false` | Enable restore of the ledger database |
-| persistence.sourceFile.guid | string | `""` | Public id of the tar gz file in Google Drive |
+| persistence.sourceFile.url | string | `""` | download url of the ledger database archive. The tar.gz archive must contain the content of cardano 'db' directory. Store this file on a CDN or Azure Blob storage container to speed up download times. |
 | persistence.storageClass | string | `nil` | PVC Storage Class for data volume If defined, storageClassName: <storageClass> If set to "-", storageClassName: "", which disables dynamic provisioning If undefined (the default) or set to null, no storageClassName spec is   set, choosing the default provisioner.  (gp2 on AWS, standard on   GKE, AWS & OpenStack) |
 | persistence.subPath | string | `""` | The subdirectory of the volume to mount to Useful in dev environments and one PV for multiple services |
 | podAnnotations."prometheus.io/port" | string | `"12789"` |  |
 | podAnnotations."prometheus.io/scrape" | string | `"true"` |  |
-| podSecurityContext.fsGroup | int | `1001` |  |
+| podSecurityContext.fsGroup | int | `65532` |  |
+| podSecurityContext.runAsNonRoot | bool | `true` |  |
+| podSecurityContext.runAsUser | int | `65532` |  |
+| podSecurityContext.seccompProfile.type | string | `"RuntimeDefault"` |  |
 | producer.affinity | object | `{}` | Affinity for Cardano producer pods assignment ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity NOTE: `master.podAffinityPreset`, `master.podAntiAffinityPreset`, and `master.nodeAffinityPreset` will be ignored when it's set |
 | producer.enabled | bool | `true` |  |
 | producer.livenessProbe | object | `{"enabled":true,"failureThreshold":1,"initialDelaySeconds":120,"periodSeconds":60,"successThreshold":1,"timeoutSeconds":5}` | Configure extra options for Cardano producer containers' liveness and readiness probes ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes |
@@ -157,14 +163,9 @@ A Cardano Helm chart for Kubernetes
 | relay.tolerations | list | `[]` | Tolerations for Cardano relay pods assignment ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/ |
 | secrets.redisPassword | string | `""` | Redis PubSub service password  |
 | secrets.redisUsername | string | `""` | Redis PubSub service username  |
-| securityContext.runAsNonRoot | bool | `true` |  |
-| securityContext.runAsUser | int | `1001` |  |
 | service.annotations."service.beta.kubernetes.io/azure-dns-label-name" | string | `"stupidchess"` | Hostname to be assigned to the ELB for the service |
 | service.port | int | `6000` |  |
 | service.type | string | `"LoadBalancer"` |  |
-| serviceAccount.annotations | object | `{}` | Annotations to add to the service account |
-| serviceAccount.create | bool | `true` | Specifies whether a service account should be created |
-| serviceAccount.name | string | `""` | The name of the service account to use. If not set and create is true, a name is generated using the fullname template |
 | vault.csi.coldVaultName | string | `""` | Name of the Azure Key Vault that contains cold keys. Vault secrets are mounted read-only in the admin pod. |
 | vault.csi.enabled | bool | `true` | Enable private key access from a Vault |
 | vault.csi.hotVaultName | string | `""` | Name of the Azure Key Vault that contains hot keys. Vault secrets (kesSkey, vrfSkey, nodeCert) are mounted read-only in cardano-producer pod. |

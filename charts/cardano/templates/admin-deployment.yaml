@@ -12,6 +12,8 @@ metadata:
     app.kubernetes.io/component: admin
     {{- include "cardano.labels" . | nindent 4 }}
   annotations:
+    checkov.io/skip1: CKV_K8S_8="No Liveness Probe"
+    checkov.io/skip2: CKV_K8S_9="No Readiness Probe"
   {{- if .Values.commonAnnotations }}
   {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
   {{- end }}
@@ -35,13 +37,19 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "cardano.serviceAccountName" . }}
+      automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: admin
           securityContext:
             runAsUser: 65532
+            capabilities:
+              drop:
+              - NET_RAW
+              - ALL
           image: "{{- .Values.admin.repository -}}:{{- .Values.admin.tag | default .Chart.AppVersion -}}"
           imagePullPolicy: {{ .Values.admin.pullPolicy }}
           resources:

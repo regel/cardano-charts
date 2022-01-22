@@ -51,17 +51,6 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
-Create the name of the service account to use
-*/}}
-{{- define "cardano.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create }}
-{{- default (include "cardano.fullname" .) .Values.serviceAccount.name }}
-{{- else }}
-{{- default "default" .Values.serviceAccount.name }}
-{{- end }}
-{{- end }}
-
-{{/*
 Get the configmap name.
 */}}
 {{- define "cardano.configName" -}}

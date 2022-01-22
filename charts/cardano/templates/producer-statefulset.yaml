@@ -9,6 +9,8 @@ metadata:
     app.kubernetes.io/component: producer
     {{- include "cardano.labels" . | nindent 4 }}
   annotations:
+    checkov.io/skip1: CKV_K8S_28="NET_RAW"
+    checkov.io/skip2: CKV_K8S_37="admission of containers with capabilities."
   {{- if .Values.commonAnnotations }}
   {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
   {{- end }}
@@ -39,8 +41,9 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "cardano.serviceAccountName" . }}
-      securityContext: {}  # fsGroup doesnt solve the use cas where you need to set readOnly permission on some file
+      automountServiceAccountToken: false
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
       {{- if .Values.producer.affinity }}
       affinity: {{- include "common.tplvalues.render" (dict "value" .Values.producer.affinity "context" $) | nindent 8 }}
       {{- else }}
@@ -68,8 +71,6 @@ spec:
 
       initContainers:
         - name: genesis
-          securityContext:
-            {{- toYaml .Values.producer.securityContext | nindent 12 }}
           image: "{{ .Values.busybox.repository }}:{{ .Values.busybox.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.busybox.pullPolicy }}
           command: ["/bin/sh", "-c"]
@@ -87,8 +88,6 @@ spec:
         {{- if eq .Values.environment.name "mainnet" }}
         # See cardano-node issue 3238. Genesis file is too large to fit in etcd (1 MB limit)
         - name: genesis-large
-          securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["/bin/sh", "-c"]
@@ -100,6 +99,7 @@ spec:
         {{- end }}
         {{- if .Values.producer.securityContext.runAsNonRoot }}  # https://github.com/kubernetes/kubernetes/issues/81089
         - name: set-key-ownership
+          securityContext: {}
           image: "{{- .Values.busybox.repository -}}:{{- .Values.busybox.tag | default .Chart.AppVersion -}}"
           imagePullPolicy: {{ .Values.busybox.pullPolicy }}
           command: ["sh", "-c"]
@@ -116,20 +116,15 @@ spec:
         {{- end }}
         {{- if and .Values.persistence.enabled .Values.persistence.sourceFile.enabled }}
         - name: restore
-          image: "python:3"
+          image: "{{ .Values.curl.repository }}:{{ .Values.curl.tag }}"
+          imagePullPolicy: {{ .Values.curl.pullPolicy }}
           command: ["/bin/sh", "-c"]
           args:
             - set -e ;
-              trap "rm -f {{ .Values.persistence.mountPath }}/db.tar.gz" EXIT ;
               if [ -d "{{ .Values.persistence.mountPath }}/db" ]; then
                 exit 0 ;
               fi ;
-              pip install gdown ;
-              gdown --id "{{ .Values.persistence.sourceFile.guid }}" -O "{{ .Values.persistence.mountPath }}/db.tar.gz" ;
-              tar -xzf "{{ .Values.persistence.mountPath }}/db.tar.gz" -C "{{ .Values.persistence.mountPath }}" ;
-              {{- if .Values.securityContext.runAsNonRoot }}
-              chown -R {{ .Values.securityContext.runAsUser }} "{{ .Values.persistence.mountPath }}/db" ;
-              {{- end }}
+              cd "{{ .Values.persistence.mountPath }}" && curl -L "{{ .Values.persistence.sourceFile.url }}" | tar -xz ;
           volumeMounts:
             - name: data
               mountPath: {{ .Values.persistence.mountPath }}

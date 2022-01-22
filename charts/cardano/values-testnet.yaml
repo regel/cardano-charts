@@ -44,6 +44,11 @@ busybox:
   pullPolicy: IfNotPresent
   tag: ""
 
+curl:
+  repository: "curlimages/curl"
+  pullPolicy: IfNotPresent
+  tag: "7.80.0"
+
 liveness:
   repository: alpine
   pullPolicy: IfNotPresent
@@ -67,11 +72,12 @@ podAnnotations:
   prometheus.io/port: '12789'
 
 podSecurityContext:
-  fsGroup: 1001
-
-securityContext:
   runAsNonRoot: true
   runAsUser: 1001
+  fsGroup: 1001
+  seccompProfile:
+    type: RuntimeDefault
+
 
 service:
   annotations:
@@ -442,6 +448,7 @@ persistence:
   # -- Source file to download and uncompress if the PVC is empty
   sourceFile:
     # -- Enable restore of the ledger database
-    enabled: true
-    # -- Archive of Cardano /data/db at testnet epoch 181
-    guid: 1y2KHOMHh4f3yuAsG926tWue0o2rtETol
+    enabled: false
+    # -- download url of the ledger database archive. The tar.gz archive must contain the content of cardano 'db' directory.
+    # Store this file on a CDN or Azure Blob storage container to speed up download times.
+    url: ""

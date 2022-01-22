@@ -6,6 +6,8 @@ metadata:
     app.kubernetes.io/component: relay
     {{- include "cardano.labels" . | nindent 4 }}
   annotations:
+    checkov.io/skip1: CKV_K8S_28="NET_RAW"
+    checkov.io/skip2: CKV_K8S_37="admission of containers with capabilities."
   {{- if .Values.commonAnnotations }}
   {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
   {{- end }}
@@ -37,7 +39,7 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "cardano.serviceAccountName" . }}
+      automountServiceAccountToken: false
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       {{- if .Values.relay.affinity }}
@@ -67,8 +69,6 @@ spec:
 
       initContainers:
         - name: genesis
-          securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.busybox.repository }}:{{ .Values.busybox.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.busybox.pullPolicy }}
           command: ["/bin/sh", "-c"]
@@ -86,8 +86,6 @@ spec:
         {{- if eq .Values.environment.name "mainnet" }}
         # See cardano-node issue 3238. Genesis file is too large to fit in etcd (1 MB limit)
         - name: genesis-large
-          securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["/bin/sh", "-c"]
@@ -99,34 +97,26 @@ spec:
         {{- end }}
         {{- if and .Values.persistence.enabled .Values.persistence.sourceFile.enabled }}
         - name: restore
-          image: "python:3"
+          image: "{{ .Values.curl.repository }}:{{ .Values.curl.tag }}"
+          imagePullPolicy: {{ .Values.curl.pullPolicy }}
           command: ["/bin/sh", "-c"]
           args:
             - set -e ;
-              trap "rm -f {{ .Values.persistence.mountPath }}/db.tar.gz" EXIT ;
               if [ -d "{{ .Values.persistence.mountPath }}/db" ]; then
                 exit 0 ;
               fi ;
-              pip install gdown ;
-              gdown --id "{{ .Values.persistence.sourceFile.guid }}" -O "{{ .Values.persistence.mountPath }}/db.tar.gz" ;
-              tar -xzf "{{ .Values.persistence.mountPath }}/db.tar.gz" -C "{{ .Values.persistence.mountPath }}" ;
-              {{- if .Values.securityContext.runAsNonRoot }}
-              chown -R {{ .Values.securityContext.runAsUser }} "{{ .Values.persistence.mountPath }}/db" ;
-              {{- end }}
+              cd "{{ .Values.persistence.mountPath }}" && curl -L "{{ .Values.persistence.sourceFile.url }}" | tar -xz ;
           volumeMounts:
             - name: data
               mountPath: {{ .Values.persistence.mountPath }}
               subPath: {{ .Values.persistence.subPath }}
-        {{- end }}
-
+        {{- end }} 
       dnsConfig:
         options:
           - name: ndots
             value: "1"  # if there are any dots in a name, the name will be tried first as an absolute name before any search list elements are appended to it.
       containers:
         - name: topology-updater
-          securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{- .Values.p2p.repository -}}:{{- .Values.p2p.tag | default .Chart.AppVersion -}}"
           imagePullPolicy: {{ .Values.p2p.pullPolicy }}
           resources:
@@ -152,8 +142,6 @@ spec:
 
         {{- if .Values.p2p.enabled }}
         - name: p2p
-          securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{- .Values.p2p.repository -}}:{{- .Values.p2p.tag | default .Chart.AppVersion -}}"
           imagePullPolicy: {{ .Values.p2p.pullPolicy }}
           resources:
@@ -188,8 +176,6 @@ spec:
             value: /ipc/node.socket
 
         - name: p2p-nginx
-          securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
           image: nginxinc/nginx-unprivileged
           imagePullPolicy: {{ .Values.p2p.pullPolicy }}
           resources:
@@ -218,8 +204,6 @@ spec:
         {{- end }}
 
         - name: node
-          securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["/bin/sh", "-c"]
