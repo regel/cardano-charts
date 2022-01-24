@@ -197,6 +197,9 @@ p2p:
 
 
 relay:
+  # -- GHC RTS flags. Descriptions of flags can be seen in GHC User's Guide, or by running RTS help message using +RTS --help
+  extraFlags: "+RTS -c -RTS"
+
   replicaCount: 1
 
   startupProbe:
