@@ -4,6 +4,8 @@
 {{- $readinessHost := printf "%s-relay-0.%s-headless.%s.svc.cluster.local" $fullName $fullName .Release.Namespace }}
 {{- $readinessPort := "12789" }}
 - name: "wait-for-metrics"
+  securityContext:
+    readOnlyRootFilesystem: true
   image: "{{- .Values.busybox.repository -}}:{{- .Values.busybox.tag | default .Chart.AppVersion -}}"
   imagePullPolicy: "IfNotPresent"
   env:

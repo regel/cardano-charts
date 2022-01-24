@@ -45,6 +45,7 @@ spec:
       containers:
         - name: admin
           securityContext:
+            readOnlyRootFilesystem: true
             runAsUser: 65532
             capabilities:
               drop:

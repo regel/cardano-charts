@@ -301,6 +301,10 @@ relay:
   spreadConstraints: {}
   # -- Integer setting the termination grace period for the cardano-relay pods
   terminationGracePeriodSeconds: 30
+  securityContext:
+    readOnlyRootFilesystem: true
+#    runAsNonRoot: true
+#    runAsUser: 1001
 
 
 producer:
@@ -403,7 +407,8 @@ producer:
   spreadConstraints: {}
   # -- Integer setting the termination grace period for the cardano-producer pods
   terminationGracePeriodSeconds: 30
-  securityContext: {}
+  securityContext:
+    readOnlyRootFilesystem: true
 #    runAsNonRoot: true
 #    runAsUser: 1001
 

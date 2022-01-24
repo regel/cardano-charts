@@ -4,6 +4,7 @@ kind: ConfigMap
 metadata:
   name: {{ template "cardano.configName" . }}-testnet
 data:
+{{ (tpl (.Files.Glob "files/nginx.conf").AsConfig . ) | indent 2 }}
 {{ (tpl (.Files.Glob "files/readiness.sh").AsConfig . ) | indent 2 }}
 {{ (tpl (.Files.Glob "files/p2p.sh").AsConfig . ) | indent 2 }}
 {{ (tpl (.Files.Glob "files/testnet/producer-topology.json").AsConfig . ) | indent 2 }}

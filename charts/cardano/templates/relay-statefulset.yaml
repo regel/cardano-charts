@@ -69,6 +69,8 @@ spec:
 
       initContainers:
         - name: genesis
+          securityContext:
+            {{- toYaml .Values.relay.securityContext | nindent 12 }}
           image: "{{ .Values.busybox.repository }}:{{ .Values.busybox.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.busybox.pullPolicy }}
           command: ["/bin/sh", "-c"]
@@ -86,6 +88,8 @@ spec:
         {{- if eq .Values.environment.name "mainnet" }}
         # See cardano-node issue 3238. Genesis file is too large to fit in etcd (1 MB limit)
         - name: genesis-large
+          securityContext:
+            {{- toYaml .Values.relay.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["/bin/sh", "-c"]
@@ -97,6 +101,8 @@ spec:
         {{- end }}
         {{- if and .Values.persistence.enabled .Values.persistence.sourceFile.enabled }}
         - name: restore
+          securityContext:
+            {{- toYaml .Values.relay.securityContext | nindent 12 }}
           image: "{{ .Values.curl.repository }}:{{ .Values.curl.tag }}"
           imagePullPolicy: {{ .Values.curl.pullPolicy }}
           command: ["/bin/sh", "-c"]
@@ -117,6 +123,8 @@ spec:
             value: "1"  # if there are any dots in a name, the name will be tried first as an absolute name before any search list elements are appended to it.
       containers:
         - name: topology-updater
+          securityContext:
+            {{- toYaml .Values.relay.securityContext | nindent 12 }}
           image: "{{- .Values.p2p.repository -}}:{{- .Values.p2p.tag | default .Chart.AppVersion -}}"
           imagePullPolicy: {{ .Values.p2p.pullPolicy }}
           resources:
@@ -142,6 +150,8 @@ spec:
 
         {{- if .Values.p2p.enabled }}
         - name: p2p
+          securityContext:
+            {{- toYaml .Values.relay.securityContext | nindent 12 }}
           image: "{{- .Values.p2p.repository -}}:{{- .Values.p2p.tag | default .Chart.AppVersion -}}"
           imagePullPolicy: {{ .Values.p2p.pullPolicy }}
           resources:
@@ -176,7 +186,9 @@ spec:
             value: /ipc/node.socket
 
         - name: p2p-nginx
-          image: nginxinc/nginx-unprivileged
+          securityContext:
+            {{- toYaml .Values.relay.securityContext | nindent 12 }}
+          image: nginx:1.21.5-alpine
           imagePullPolicy: {{ .Values.p2p.pullPolicy }}
           resources:
             limits:
@@ -187,9 +199,26 @@ spec:
               containerPort: 8080
               protocol: TCP
           volumeMounts:
+            - name: nginx-emptydir
+              mountPath: /docker-entrypoint.d/
+            - name: nginx-tmpdir
+              mountPath: /tmp
+            - name: p2p-init
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
             - name: p2p
               mountPath: /usr/share/nginx/html
               readOnly: true
+          {{- if .Values.p2p.livenessProbe.enabled }}
+          livenessProbe:
+            initialDelaySeconds: {{ .Values.p2p.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.p2p.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ add1 .Values.p2p.livenessProbe.timeoutSeconds }}
+            successThreshold: {{ .Values.p2p.livenessProbe.successThreshold }}
+            failureThreshold: {{ .Values.p2p.livenessProbe.failureThreshold }}
+            tcpSocket:
+              port: 8080
+          {{- end }}
           {{- if .Values.p2p.readinessProbe.enabled }}
           readinessProbe:
             initialDelaySeconds: {{ .Values.p2p.readinessProbe.initialDelaySeconds }}
@@ -204,6 +233,8 @@ spec:
         {{- end }}
 
         - name: node
+          securityContext:
+            {{- toYaml .Values.relay.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["/bin/sh", "-c"]
@@ -286,6 +317,10 @@ spec:
         - name: readiness-probe
           configMap:
             name: {{ template "cardano.configName" . }}-{{ .Values.environment.name }}
+        - name: nginx-emptydir
+          emptyDir: {}
+        - name: nginx-tmpdir
+          emptyDir: {}
         - name: genesis
           emptyDir: {}
         - name: node-ipc
