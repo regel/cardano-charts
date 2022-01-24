@@ -1,4 +1,11 @@
-on: [push]
+name: Checkov
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
 jobs:
   checkov-job:
     runs-on: ubuntu-latest
@@ -11,9 +18,10 @@ jobs:
         id: checkov
         uses: bridgecrewio/checkov-action@master
         with:
+          api-key: ${{ secrets.BC_API_KEY }}
           directory: charts/cardano 
           quiet: true
-          soft_fail: true # optional: do not return an error code if there are failed checks
+          soft_fail: false # return an error code if there are failed checks not present in baseline
           config_file: charts/cardano/.checkov
           baseline: charts/cardano/.checkov.baseline
-          output_format: github_failed_only
+
