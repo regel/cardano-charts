@@ -1,0 +1,19 @@
+branch: master
+directory:
+- charts/cardano
+download-external-modules: false
+evaluate-variables: true
+external-modules-download-path: .external_modules
+framework:
+- helm
+output:
+- github_failed_only
+skip-check:
+- CKV_K8S_21
+- CKV_K8S_10
+- CKV_K8S_11
+- CKV_K8S_12
+- CKV_K8S_13
+skip-path:
+- /cardano/templates/tests/*
+- /redis/*
