@@ -1,0 +1,89 @@
+{
+    "failed_checks": [
+        {
+            "file": "/cardano/templates/producer-statefulset.yaml",
+            "findings": [
+                {
+                    "resource": "StatefulSet.default.RELEASE-NAME-cardano-producer",
+                    "check_ids": [
+                        "CKV_K8S_15",
+                        "CKV_K8S_20",
+                        "CKV_K8S_43"
+                    ]
+                }
+            ]
+        },
+        {
+            "file": "/cardano/templates/p2p-deployment.yaml",
+            "findings": [
+                {
+                    "resource": "Deployment.default.RELEASE-NAME-cardano-p2p",
+                    "check_ids": [
+                        "CKV_K8S_15",
+                        "CKV_K8S_43"
+                    ]
+                }
+            ]
+        },
+        {
+            "file": "/cardano/templates/topology-updater-pull.yaml",
+            "findings": [
+                {
+                    "resource": "CronJob.default.RELEASE-NAME-topology-updater-pull",
+                    "check_ids": [
+                        "CKV_K8S_15",
+                        "CKV_K8S_20",
+                        "CKV_K8S_31",
+                        "CKV_K8S_35",
+                        "CKV_K8S_43"
+                    ]
+                }
+            ]
+        },
+        {
+            "file": "/cardano/templates/admin-deployment.yaml",
+            "findings": [
+                {
+                    "resource": "Deployment.default.RELEASE-NAME-cardano-admin",
+                    "check_ids": [
+                        "CKV_K8S_15",
+                        "CKV_K8S_20",
+                        "CKV_K8S_43"
+                    ]
+                }
+            ]
+        },
+        {
+            "file": "/cardano/templates/topology-updater-push.yaml",
+            "findings": [
+                {
+                    "resource": "CronJob.default.RELEASE-NAME-topology-updater-push",
+                    "check_ids": [
+                        "CKV_K8S_15",
+                        "CKV_K8S_20",
+                        "CKV_K8S_31",
+                        "CKV_K8S_35",
+                        "CKV_K8S_43"
+                    ]
+                }
+            ]
+        },
+        {
+            "file": "/cardano/templates/relay-statefulset.yaml",
+            "findings": [
+                {
+                    "resource": "StatefulSet.default.RELEASE-NAME-cardano-relay",
+                    "check_ids": [
+                        "CKV_K8S_14",
+                        "CKV_K8S_15",
+                        "CKV_K8S_20",
+                        "CKV_K8S_35",
+                        "CKV_K8S_43",
+                        "CKV_K8S_8",
+                        "CKV_K8S_9"
+                    ]
+                }
+            ]
+        }
+    ]
+}
