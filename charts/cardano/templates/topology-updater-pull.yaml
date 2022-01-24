@@ -35,6 +35,8 @@ spec:
             {{ include "cardano.readiness.waitForEkg" . | nindent 10 }}
           containers:
           - name: pull
+            securityContext:
+              readOnlyRootFilesystem: true
             image: "{{- .Values.p2p.repository -}}:{{- .Values.p2p.tag | default .Chart.AppVersion -}}"
             imagePullPolicy: {{ .Values.p2p.pullPolicy }}
             resources:
