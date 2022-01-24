@@ -4,7 +4,7 @@
             "file": "/cardano/templates/producer-statefulset.yaml",
             "findings": [
                 {
-                    "resource": "StatefulSet.default.RELEASE-NAME-cardano-producer",
+                    "resource": "StatefulSet.default.release-name-cardano-producer",
                     "check_ids": [
                         "CKV_K8S_15",
                         "CKV_K8S_20",
@@ -17,7 +17,7 @@
             "file": "/cardano/templates/p2p-deployment.yaml",
             "findings": [
                 {
-                    "resource": "Deployment.default.RELEASE-NAME-cardano-p2p",
+                    "resource": "Deployment.default.release-name-cardano-p2p",
                     "check_ids": [
                         "CKV_K8S_15",
                         "CKV_K8S_43"
@@ -29,7 +29,7 @@
             "file": "/cardano/templates/topology-updater-pull.yaml",
             "findings": [
                 {
-                    "resource": "CronJob.default.RELEASE-NAME-topology-updater-pull",
+                    "resource": "CronJob.default.release-name-topology-updater-pull",
                     "check_ids": [
                         "CKV_K8S_15",
                         "CKV_K8S_20",
@@ -44,7 +44,7 @@
             "file": "/cardano/templates/admin-deployment.yaml",
             "findings": [
                 {
-                    "resource": "Deployment.default.RELEASE-NAME-cardano-admin",
+                    "resource": "Deployment.default.release-name-cardano-admin",
                     "check_ids": [
                         "CKV_K8S_15",
                         "CKV_K8S_20",
@@ -57,7 +57,7 @@
             "file": "/cardano/templates/topology-updater-push.yaml",
             "findings": [
                 {
-                    "resource": "CronJob.default.RELEASE-NAME-topology-updater-push",
+                    "resource": "CronJob.default.release-name-topology-updater-push",
                     "check_ids": [
                         "CKV_K8S_15",
                         "CKV_K8S_20",
@@ -72,7 +72,7 @@
             "file": "/cardano/templates/relay-statefulset.yaml",
             "findings": [
                 {
-                    "resource": "StatefulSet.default.RELEASE-NAME-cardano-relay",
+                    "resource": "StatefulSet.default.release-name-cardano-relay",
                     "check_ids": [
                         "CKV_K8S_14",
                         "CKV_K8S_15",
