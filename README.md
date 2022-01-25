@@ -1,14 +1,14 @@
 # Cardano Charts
 
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Checkov](https://github.com/regel/cardano-charts/actions/workflows/checkov.yml/badge.svg)](https://github.com/regel/cardano-charts/actions/workflows/checkov.yml) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 Contains Helm Charts for operating **the most secure** Cardano nodes in Kubernetes:
 - [charts/cardano](./charts/cardano/README.md)
 
 This Chart solves common pain points of Cardano node operations:
-- Long bootstrap time for new nodes: this chart restores testnet data at epoch 172 and mainnet data at epoch 306
-- Security measures: this Helm chart combined with Terraform enforces best security practices in multiple areas (vault, acls, policies, etc)
-- Upgrades: a set of Terraform files is provided to facilitate upgrades using infrastructure-as-code best practices
+- Long bootstrap time for new nodes: this chart can restore testnet or mainnet data at the given epoch using a compressed file archive
+- Security measures: combine this chart with Terraform [modules](https://github.com/regel/terraform-azure-cardano) to enforce best security practices in multiple areas (vault, acls, policies, etc)
+- Upgrades: facilitate upgrades using infrastructure-as-code best practices
 
 ## Backers :dart: :heart_eyes:
 
@@ -41,42 +41,13 @@ This Cloud Native Helm Chart leverages advanced security features provided in Ku
 - [Calico](https://docs.microsoft.com/en-us/azure/aks/use-network-policies) plugin: see how this network plugin in Kubernetes enforces `ingress` and `egress` traffic between pods and external IPs using [Network Policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
 - Watch this [KubeCon](https://www.youtube.com/watch?v=3gGpMmYeEO8) talk or check out the recipes on [Network Policies](https://github.com/ahmetb/kubernetes-network-policy-recipes). Credits: Ahmet Balkan, Google
 - Key Vault: all secret keys required to run a Cardano node are stored inside a Vault and only mounted where the least access privilege applies. The Azure Vault used in this Chart requires the configuration of a [User Assigned Managed Identity](https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview)
-- Run As NonRoot: Containers run using non-root users according to best Docker practices
-
-### Concepts
-
-#### Cold (Offline) Keys :snowman:
-
-Your cold keys are essentially your pool id. When you submit registration with the same cold keys you are updating the pool parameters rather than creating a new one.
-
-- `Cold skey`: Stake pool cold (offline) key
-- `Cold vkey`: Stake pool cold vkey
-- `Cold counter`: Stake pool cold counter
-
-Using this Cardano Helm Chart, the cold keys are automatically read from the vault and mounted read-only in the admin's pod filesystem. The admin pod is using air gapping for security reasons and will not be able to communicate with other pods in this Chart. Use the admin pod for transactions signing and nothing else.
-
-#### Hot Keys :volcano:
-
-- `KES skey`: Also called  "hot" key, is a node operational key that authenticates who you are. You specify the validity of the KES key using the start time and key period parameters and this KES key need to be updated every 90 days. 
-- `VRF skey`: Controls your participation in the slot leader selection process. 
-- `Operational node certificate`:  Represent the link between the operator's offline key and their operational key. A certificate's job is to check whether or not an operational key is valid, to prevent malicious interference. The certificate identifies the current operational key, and is signed by the offline key. 
-
-With this Cardano Helm Chart, the hot keys are automatically read from the vault and mounted in the producer's filesystem.
-
-##### Updating Hot Keys
-
-Updating the KES hot key in the Vault will not be reflected in the producer's pod. Therefore, delete the producer pod manually, or scale the StatefulSet in order to restart the pod and read the updated hot keys from the Vault: 
-
-```
-kubectl scale -n cardano-ns --replicas=0 sts/cardano-producer
-kubectl scale -n cardano-ns --replicas=1 sts/cardano-producer
-```
+- Run As NonRoot and set root filesystems Read-Only: Containers run using non-root users according to best Docker practices
 
 ## Frequently Asked Questions :question:
 
 ### How can Cardano Charts be so Awesome?
 
-Open Source is Awesome but is hard. Help me grow this project by becoming a backer and making a [[donation](https://opencollective.com/gh-regel#backer)]
+Help me grow this project by becoming a backer and making a [[donation](https://opencollective.com/gh-regel#backer)]
 
 ### Where Can I Find Documentation on Azure Key Vault?
 
