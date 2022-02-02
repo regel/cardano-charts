@@ -42,7 +42,7 @@ admin:
 busybox:
   repository: busybox
   pullPolicy: IfNotPresent
-  tag: ""
+  tag: "1.35.0"
 
 curl:
   repository: "curlimages/curl"
@@ -73,8 +73,8 @@ podAnnotations:
 
 podSecurityContext:
   runAsNonRoot: true
-  runAsUser: 1001
-  fsGroup: 1001
+  runAsUser: 65532
+  fsGroup: 65532
   seccompProfile:
     type: RuntimeDefault
 
@@ -150,6 +150,43 @@ networkPolicy:
   enabled: true
 
 
+ogmios:
+  repository: cardanosolutions/ogmios
+  pullPolicy: IfNotPresent
+  tag: "latest"
+  enabled: true
+  securityContext:
+    readOnlyRootFilesystem: true
+  # -- Configure readiness probe for ogmios sidecar container
+  readinessProbe:
+    enabled: true
+    # -- Initial delay seconds for readinessProbe
+    initialDelaySeconds: 20
+    # -- Period seconds for readinessProbe
+    periodSeconds: 5
+    # -- Timeout seconds for readinessProbe
+    timeoutSeconds: 1
+    # -- Success threshold for readinessProbe
+    successThreshold: 1
+    # -- Failure threshold for readinessProbe
+    failureThreshold: 5
+  # -- Cardano ogmios ws bridge resource requests and limits
+  # ref: http://kubernetes.io/docs/user-guide/compute-resources/
+  resources:
+    # -- The resources limits for the Ogmios ws bridge container
+    limits:
+      cpu: "200m"
+      memory: "100Mi"
+    # -- The requested resources for the Ogmios ws bridge container
+    requests:
+      cpu: "100m"
+      memory: "100Mi"
+  service:
+    annotations: {}
+    type: ClusterIP
+    port: 1337
+
+
 # -- P2P discovery configuration
 # ref: https://github.com/regel/cardano-p2p
 p2p:
@@ -159,7 +196,7 @@ p2p:
   # ref: https://hub.docker.com/r/regel/cardano-p2p
   repository: regel/cardano-p2p
   pullPolicy: IfNotPresent
-  tag: "v0.0.14"
+  tag: "v0.1.5"
   # -- Enable peer to peer Cardano node discovery
   enabled: true
   # -- Use 'clio' to push blockNo to the CLIO service
@@ -170,6 +207,7 @@ p2p:
   ipVersion: 4
   maxPeers: 10
   ekgTimeout: 5
+  probeTimeout: "1s"
 
   livenessProbe:
     # -- Enable livenessProbe on p2p node
@@ -189,7 +227,7 @@ p2p:
     # -- Enable readinessProbe on p2p nginx node
     enabled: true
     # -- Initial delay seconds for readinessProbe
-    initialDelaySeconds: 600
+    initialDelaySeconds: 60
     # -- Period seconds for readinessProbe
     periodSeconds: 10
     # -- Timeout seconds for readinessProbe
@@ -202,10 +240,13 @@ p2p:
   service:
     annotations: {}
     type: ClusterIP
-    port: 6001
+    port: 8080
 
 
 relay:
+  # -- GHC RTS flags. Descriptions of flags can be seen in GHC User's Guide, or by running RTS help message using +RTS --help
+  extraFlags: ""
+
   replicaCount: 1
 
   startupProbe:
@@ -221,8 +262,8 @@ relay:
     # -- Success threshold for startupProbe
     successThreshold: 1
     # -- Failure threshold for startupProbe
-    # failureThreshold * periodSeconds = 24 hours and must be > than time to download the blockchain
-    failureThreshold: 1440  
+    # failureThreshold * periodSeconds = 1 hour.
+    failureThreshold: 60
 
   # -- Configure extra options for Cardano relay containers' liveness and readiness probes
   livenessProbe:
@@ -230,11 +271,11 @@ relay:
     # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
     enabled: true
     # -- Initial delay seconds for livenessProbe
-    initialDelaySeconds: 20
+    initialDelaySeconds: 900
     # -- Period seconds for livenessProbe
     periodSeconds: 60
     # -- Timeout seconds for livenessProbe
-    timeoutSeconds: 5
+    timeoutSeconds: 1
     # -- Success threshold for livenessProbe
     successThreshold: 1
     # -- Failure threshold for livenessProbe
@@ -245,9 +286,9 @@ relay:
     # -- Initial delay seconds for readinessProbe
     initialDelaySeconds: 20
     # -- Period seconds for readinessProbe
-    periodSeconds: 5
+    periodSeconds: 10
     # -- Timeout seconds for readinessProbe
-    timeoutSeconds: 1
+    timeoutSeconds: 5
     # -- Success threshold for readinessProbe
     successThreshold: 1
     # -- Failure threshold for readinessProbe
@@ -267,7 +308,7 @@ relay:
 
   # -- Share a single process namespace between all of the containers in Cardano relay pods
   # ref: https://kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/
-  shareProcessNamespace: false
+  shareProcessNamespace: true
   # -- Pod affinity preset. Ignored if `master.affinity` is set. Allowed values: `soft` or `hard`
   # ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
   podAffinityPreset: ""
@@ -307,6 +348,10 @@ relay:
   spreadConstraints: {}
   # -- Integer setting the termination grace period for the cardano-relay pods
   terminationGracePeriodSeconds: 30
+  securityContext:
+    readOnlyRootFilesystem: true
+#    runAsNonRoot: true
+#    runAsUser: 1001
 
 
 producer:
@@ -409,7 +454,8 @@ producer:
   spreadConstraints: {}
   # -- Integer setting the termination grace period for the cardano-producer pods
   terminationGracePeriodSeconds: 30
-  securityContext: {}
+  securityContext:
+    readOnlyRootFilesystem: true
 #    runAsNonRoot: true
 #    runAsUser: 1001
 
@@ -437,7 +483,7 @@ persistence:
   accessModes:
     - ReadWriteOnce
   # -- PVC Storage Request for data volume
-  size: 64Gi
+  size: 128Gi
   # -- Annotations for the PVC
   annotations: {}
   # -- Selector to match an existing Persistent Volume (this value is evaluated as a template)

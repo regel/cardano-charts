@@ -1,3 +1,6 @@
+{{- $fullName := include "cardano.fullname" . }}
+{{- $p2pHost := printf "%s-p2p.%s" $fullName .Release.Namespace }}
+
 apiVersion: {{ include "common.capabilities.statefulset.apiVersion" . }}
 kind: StatefulSet
 metadata:
@@ -71,7 +74,7 @@ spec:
         - name: genesis
           securityContext:
             {{- toYaml .Values.relay.securityContext | nindent 12 }}
-          image: "{{ .Values.busybox.repository }}:{{ .Values.busybox.tag | default .Chart.AppVersion }}"
+          image: "{{ .Values.busybox.repository }}:{{ .Values.busybox.tag }}"
           imagePullPolicy: {{ .Values.busybox.pullPolicy }}
           command: ["/bin/sh", "-c"]
           args:
@@ -85,6 +88,42 @@ spec:
             - name: config
               mountPath: /config
               readOnly: true
+
+        {{- if .Values.p2p.enabled }}
+          {{ include "cardano.readiness.waitForP2p" . | nindent 8 }}
+        - name: pull
+          securityContext:
+            {{- toYaml .Values.relay.securityContext | nindent 12 }}
+          image: "{{- .Values.p2p.repository -}}:{{- .Values.p2p.tag -}}"
+          imagePullPolicy: {{ .Values.p2p.pullPolicy }}
+          args:
+            - fetch
+            - --endpoint-url
+            - "http://{{- $p2pHost -}}:{{ .Values.p2p.service.port }}"
+            - --output
+            - /genesis/topology.json
+            {{- if .Values.producer.enabled }}
+            - --custom-peers
+            - "{{ $fullName }}-producer-0.{{ $fullName }}-headless.{{ .Release.Namespace }}.svc.cluster.local,3001,1"
+            {{- end }}
+            - --network
+            {{- if eq .Values.environment.name "mainnet" }}
+            - "764824073"
+            {{- end }}
+            {{- if eq .Values.environment.name "testnet" }}
+            - "1097911063"
+            {{- end }}
+            - --config
+            - /p2p.yaml
+          volumeMounts:
+            - name: p2p
+              mountPath: /p2p.yaml
+              subPath: p2p.yaml
+              readOnly: true
+            - name: genesis
+              mountPath: /genesis
+        {{- end }}
+
         {{- if eq .Values.environment.name "mainnet" }}
         # See cardano-node issue 3238. Genesis file is too large to fit in etcd (1 MB limit)
         - name: genesis-large
@@ -125,19 +164,20 @@ spec:
         - name: topology-updater
           securityContext:
             {{- toYaml .Values.relay.securityContext | nindent 12 }}
-          image: "{{- .Values.p2p.repository -}}:{{- .Values.p2p.tag | default .Chart.AppVersion -}}"
+          image: "{{- .Values.p2p.repository -}}:{{- .Values.p2p.tag -}}"
           imagePullPolicy: {{ .Values.p2p.pullPolicy }}
           resources:
             limits:
               cpu: "10m"
               memory: "64Mi"
-          command: ["/bin/sh", "-c"]
           args:
-            - /cardano-p2p
-              subscribe
-              -a {{ .Release.Name }}-redis-master.{{ .Release.Namespace }}:6379
-              -t {{ .Values.p2p.topic | default "p2p" }}
-              -o /tmp/topology.new
+            - subscribe
+            - -a
+            - {{ .Release.Name }}-redis-master.{{ .Release.Namespace }}:6379
+            - -t
+            - {{ .Values.p2p.topic | default "p2p" }}
+            - -o
+            - /tmp/topology.new
           env:
           - name: "P2P_PASSWORD"
             valueFrom:
@@ -149,87 +189,26 @@ spec:
               mountPath: /tmp  # mounted in /tmp to prevent error: rename /tmp/tempfile558080208 /config/topology.json: invalid cross-device link
 
         {{- if .Values.p2p.enabled }}
-        - name: p2p
+        # shareProcessNamespace must be enabled.
+        - name: killer
           securityContext:
             {{- toYaml .Values.relay.securityContext | nindent 12 }}
-          image: "{{- .Values.p2p.repository -}}:{{- .Values.p2p.tag | default .Chart.AppVersion -}}"
-          imagePullPolicy: {{ .Values.p2p.pullPolicy }}
-          resources:
-            limits:
-              cpu: "400m"
-              memory: "2048Mi"
+          image: "{{ .Values.busybox.repository }}:{{ .Values.busybox.tag }}"
+          imagePullPolicy: {{ .Values.busybox.pullPolicy }}
           command: ["/bin/sh", "-c"]
           args:
-            - 'trap : TERM INT ;
-              bash /opt/p2p.sh ;
-              (while true; do sleep 1000; done) & wait'  # container status will be 'Running' not 'Completed'
+            - set -e ;
+              while [ ! -f /tmp/topology.new ]; do sleep 60 ; done ;
+              mv -f /tmp/topology.new /tmp/topology.json ;
+              echo $(date +"%Y-%m-%d %T") new topology file detected, restarting cardano-node pid $(pgrep cardano-node) ;
+              kill -INT $(pgrep cardano-node) ;
           volumeMounts:
-            - name: node-ipc
-              mountPath: /ipc
-            - name: p2p
-              mountPath: /p2p
-            - name: p2p-init
-              mountPath: /opt/p2p.sh
-              subPath: p2p.sh
-          {{- if .Values.p2p.readinessProbe.enabled }}
-          readinessProbe:
-            initialDelaySeconds: {{ .Values.p2p.readinessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.p2p.readinessProbe.periodSeconds }}
-            timeoutSeconds: {{ add1 .Values.p2p.readinessProbe.timeoutSeconds }}
-            successThreshold: {{ .Values.p2p.readinessProbe.successThreshold }}
-            failureThreshold: {{ .Values.p2p.readinessProbe.failureThreshold }}
-            exec:
-              command: ["stat", "/p2p/pools.json"]
-          {{- end }}
-          env:
-          - name: "CARDANO_NODE_SOCKET_PATH"
-            value: /ipc/node.socket
-
-        - name: p2p-nginx
-          securityContext:
-            {{- toYaml .Values.relay.securityContext | nindent 12 }}
-          image: nginx:1.21.5-alpine
-          imagePullPolicy: {{ .Values.p2p.pullPolicy }}
+            - name: genesis
+              mountPath: /tmp
           resources:
             limits:
-              cpu: "100m"
+              cpu: "10m"
               memory: "64Mi"
-          ports:
-            - name: p2p
-              containerPort: 8080
-              protocol: TCP
-          volumeMounts:
-            - name: nginx-emptydir
-              mountPath: /docker-entrypoint.d/
-            - name: nginx-tmpdir
-              mountPath: /tmp
-            - name: p2p-init
-              mountPath: /etc/nginx/nginx.conf
-              subPath: nginx.conf
-            - name: p2p
-              mountPath: /usr/share/nginx/html
-              readOnly: true
-          {{- if .Values.p2p.livenessProbe.enabled }}
-          livenessProbe:
-            initialDelaySeconds: {{ .Values.p2p.livenessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.p2p.livenessProbe.periodSeconds }}
-            timeoutSeconds: {{ add1 .Values.p2p.livenessProbe.timeoutSeconds }}
-            successThreshold: {{ .Values.p2p.livenessProbe.successThreshold }}
-            failureThreshold: {{ .Values.p2p.livenessProbe.failureThreshold }}
-            tcpSocket:
-              port: 8080
-          {{- end }}
-          {{- if .Values.p2p.readinessProbe.enabled }}
-          readinessProbe:
-            initialDelaySeconds: {{ .Values.p2p.readinessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.p2p.readinessProbe.periodSeconds }}
-            timeoutSeconds: {{ add1 .Values.p2p.readinessProbe.timeoutSeconds }}
-            successThreshold: {{ .Values.p2p.readinessProbe.successThreshold }}
-            failureThreshold: {{ .Values.p2p.readinessProbe.failureThreshold }}
-            httpGet:
-              path: /pools.json
-              port: 8080
-          {{- end }}
         {{- end }}
 
         - name: node
@@ -239,8 +218,7 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["/bin/sh", "-c"]
           args:
-            - mv -f /config/topology.new /config/topology.json || true ;
-              set -e ;
+            - set -e ;
               $(readlink -e /nix/store/*-cardano-node-exe-*/bin/cardano-node)
               run
               --config /config/config.json
@@ -288,9 +266,9 @@ spec:
           livenessProbe:
             exec:
               command:
-              - /bin/sh
-              - -c
-              - /bin/stat /config/topology.new && exit 1 || exit 0
+                - sh
+                - -c
+                - stat /ipc/node.socket
             initialDelaySeconds: {{ .Values.relay.livenessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.relay.livenessProbe.periodSeconds }}
             timeoutSeconds: {{ add1 .Values.relay.livenessProbe.timeoutSeconds }}
@@ -304,34 +282,60 @@ spec:
             timeoutSeconds: {{ add1 .Values.relay.readinessProbe.timeoutSeconds }}
             successThreshold: {{ .Values.relay.readinessProbe.successThreshold }}
             failureThreshold: {{ .Values.relay.readinessProbe.failureThreshold }}
-            exec:
-              command:
-                - sh
-                - -c
-                - bash /opt/readiness.sh
+            tcpSocket:
+              port: 3001
           {{- end }}
           resources:
             {{- toYaml .Values.relay.resources | nindent 12 }}
 
+        {{- if .Values.ogmios.enabled }}
+        - name: ogmios
+          securityContext:
+            {{- toYaml .Values.ogmios.securityContext | nindent 12 }}
+          image: "{{ .Values.ogmios.repository }}:{{ .Values.ogmios.tag }}"
+          imagePullPolicy: {{ .Values.ogmios.pullPolicy }}
+          args:
+            - --host
+            - 0.0.0.0
+            - --node-config
+            - /config/config.json
+            - --node-socket
+            - /ipc/node.socket
+          volumeMounts:
+            - name: node-ipc
+              mountPath: /ipc
+            - name: genesis
+              mountPath: /config
+          ports:
+            - name: ogmios
+              containerPort: 1337
+              protocol: TCP
+          {{- if .Values.ogmios.readinessProbe.enabled }}
+          readinessProbe:
+            initialDelaySeconds: {{ .Values.ogmios.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.ogmios.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ add1 .Values.ogmios.readinessProbe.timeoutSeconds }}
+            successThreshold: {{ .Values.ogmios.readinessProbe.successThreshold }}
+            failureThreshold: {{ .Values.ogmios.readinessProbe.failureThreshold }}
+            httpGet:
+              path: /health
+              port: 1337
+          {{- end }}
+          resources:
+            {{- toYaml .Values.ogmios.resources | nindent 12 }}
+        {{- end }}
+
       volumes:
+        - name: p2p
+          configMap:
+            name: {{ template "cardano.configName" . }}-p2p
         - name: readiness-probe
           configMap:
             name: {{ template "cardano.configName" . }}-{{ .Values.environment.name }}
-        - name: nginx-emptydir
-          emptyDir: {}
-        - name: nginx-tmpdir
-          emptyDir: {}
         - name: genesis
           emptyDir: {}
         - name: node-ipc
           emptyDir: {}
-        {{- if .Values.p2p.enabled }}
-        - name: p2p-init
-          configMap:
-            name: {{ template "cardano.configName" . }}-{{ .Values.environment.name }}
-        - name: p2p
-          emptyDir: {}
-        {{- end }}
         - name: config
           configMap:
             name: {{ template "cardano.configName" . }}-{{ .Values.environment.name }}

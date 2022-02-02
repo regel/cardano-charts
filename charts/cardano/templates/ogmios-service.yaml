@@ -1,0 +1,23 @@
+{{- if .Values.ogmios.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "cardano.fullname" . }}-ogmios
+  labels:
+    {{- include "cardano.labels" . | nindent 4 }}
+  annotations:
+  {{- with .Values.ogmios.service.annotations }}
+      {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.ogmios.service.type }}
+  ports:
+    - port: {{ .Values.ogmios.service.port }}
+      targetPort: 1337
+      protocol: TCP
+      name: ogmios
+  selector:
+    app.kubernetes.io/component: relay
+    {{- include "cardano.selectorLabels" . | nindent 4 }}
+{{- end }}

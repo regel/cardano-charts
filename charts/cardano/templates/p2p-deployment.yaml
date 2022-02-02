@@ -51,13 +51,12 @@ spec:
           imagePullPolicy: {{ .Values.p2p.pullPolicy }}
           resources:
             limits:
-              cpu: "10m"
+              cpu: "100m"
               memory: "64Mi"
-          command: ["/bin/sh", "-c"]
           args:
-            - /cardano-p2p
-              --config /p2p.yaml
-              p2p
+            - p2p
+            - --config
+            - /p2p.yaml
           volumeMounts:
             - name: config
               mountPath: /p2p.yaml

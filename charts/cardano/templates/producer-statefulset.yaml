@@ -73,7 +73,7 @@ spec:
         - name: genesis
           securityContext:
             {{- toYaml .Values.producer.securityContext | nindent 12 }}
-          image: "{{ .Values.busybox.repository }}:{{ .Values.busybox.tag | default .Chart.AppVersion }}"
+          image: "{{ .Values.busybox.repository }}:{{ .Values.busybox.tag }}"
           imagePullPolicy: {{ .Values.busybox.pullPolicy }}
           command: ["/bin/sh", "-c"]
           args:
