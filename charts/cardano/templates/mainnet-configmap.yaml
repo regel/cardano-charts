@@ -4,9 +4,7 @@ kind: ConfigMap
 metadata:
   name: {{ template "cardano.configName" . }}-mainnet
 data:
-{{ (tpl (.Files.Glob "files/nginx.conf").AsConfig . ) | indent 2 }}
 {{ (tpl (.Files.Glob "files/readiness.sh").AsConfig . ) | indent 2 }}
-{{ (tpl (.Files.Glob "files/p2p.sh").AsConfig . ) | indent 2 }}
 {{ (tpl (.Files.Glob "files/mainnet/producer-topology.json").AsConfig . ) | indent 2 }}
 {{ (tpl (.Files.Glob "files/mainnet/relay-topology.json").AsConfig . ) | indent 2 }}
 {{ (tpl (.Files.Glob "files/mainnet/config.json").AsConfig . ) | indent 2 }}
