@@ -1,6 +1,7 @@
 {{- $fullName := include "cardano.fullname" . }}
 {{- $spcHot := printf "%s-spc-%s" $fullName "hot" }}
 
+{{- if .Values.producer.enabled }}
 apiVersion: {{ include "common.capabilities.statefulset.apiVersion" . }}
 kind: StatefulSet
 metadata:
@@ -282,4 +283,6 @@ spec:
         {{- if .Values.persistence.selector }}
         selector: {{- include "common.tplvalues.render" (dict "value" .Values.persistence.selector "context" $) | nindent 10 }}
         {{- end -}}
+{{- end }}
+
 {{- end }}
