@@ -9,7 +9,7 @@ A Cardano Helm chart for Kubernetes
 | Repository | Name | Version |
 |------------|------|---------|
 | https://charts.bitnami.com/bitnami | common | 1.8.0 |
-| https://charts.bitnami.com/bitnami | redis | 14.3.3 |
+| https://charts.bitnami.com/bitnami | redis | 16.4.0 |
 
 ## Values
 
@@ -23,7 +23,6 @@ A Cardano Helm chart for Kubernetes
 | curl.repository | string | `"curlimages/curl"` |  |
 | curl.tag | string | `"7.80.0"` |  |
 | environment.name | string | `"testnet"` | name of the Cardano network to use. Either 'testnet' or 'mainnet' |
-| existingSecret | string | `"{{ .Release.Name }}-auth"` | name of an existing secret that contains all of the required secrets |
 | fullnameOverride | string | `""` |  |
 | global.redis.servicePort | int | `6379` |  |
 | global.storageClass | string | `nil` | Global StorageClass for Persistent Volume(s) |
@@ -64,7 +63,7 @@ A Cardano Helm chart for Kubernetes
 | ogmios.service.port | int | `1337` |  |
 | ogmios.service.type | string | `"ClusterIP"` |  |
 | ogmios.tag | string | `"latest"` |  |
-| p2p | object | `{"clioEnabled":true,"debug":false,"ekgTimeout":5,"enabled":true,"ipVersion":4,"livenessProbe":{"enabled":true,"failureThreshold":1,"initialDelaySeconds":60,"periodSeconds":10,"successThreshold":1,"timeoutSeconds":1},"maxPeers":10,"probeTimeout":"1s","pullPolicy":"IfNotPresent","readinessProbe":{"enabled":true,"failureThreshold":10,"initialDelaySeconds":60,"periodSeconds":10,"successThreshold":1,"timeoutSeconds":1},"replicaCount":1,"repository":"regel/cardano-p2p","service":{"annotations":{},"port":8080,"type":"ClusterIP"},"tag":"v0.1.5","topic":"p2p"}` | P2P discovery configuration ref: https://github.com/regel/cardano-p2p |
+| p2p | object | `{"clioEnabled":true,"debug":false,"ekgTimeout":5,"enabled":true,"ipVersion":4,"livenessProbe":{"enabled":true,"failureThreshold":1,"initialDelaySeconds":60,"periodSeconds":10,"successThreshold":1,"timeoutSeconds":1},"maxPeers":10,"probeTimeout":"1s","pullPolicy":"IfNotPresent","readinessProbe":{"enabled":true,"failureThreshold":10,"initialDelaySeconds":10,"periodSeconds":10,"successThreshold":1,"timeoutSeconds":1},"replicaCount":1,"repository":"regel/cardano-p2p","service":{"annotations":{},"port":8080,"type":"ClusterIP"},"tag":"v0.1.5","topic":"p2p"}` | P2P discovery configuration ref: https://github.com/regel/cardano-p2p |
 | p2p.clioEnabled | bool | `true` | Use 'clio' to push blockNo to the CLIO service |
 | p2p.enabled | bool | `true` | Enable peer to peer Cardano node discovery |
 | p2p.livenessProbe.enabled | bool | `true` | Enable livenessProbe on p2p node |
@@ -75,7 +74,7 @@ A Cardano Helm chart for Kubernetes
 | p2p.livenessProbe.timeoutSeconds | int | `1` | Timeout seconds for livenessProbe |
 | p2p.readinessProbe.enabled | bool | `true` | Enable readinessProbe on p2p nginx node |
 | p2p.readinessProbe.failureThreshold | int | `10` | Failure threshold for readinessProbe |
-| p2p.readinessProbe.initialDelaySeconds | int | `60` | Initial delay seconds for readinessProbe |
+| p2p.readinessProbe.initialDelaySeconds | int | `10` | Initial delay seconds for readinessProbe |
 | p2p.readinessProbe.periodSeconds | int | `10` | Period seconds for readinessProbe |
 | p2p.readinessProbe.successThreshold | int | `1` | Success threshold for readinessProbe |
 | p2p.readinessProbe.timeoutSeconds | int | `1` | Timeout seconds for readinessProbe |
@@ -136,8 +135,7 @@ A Cardano Helm chart for Kubernetes
 | producer.terminationGracePeriodSeconds | int | `30` | Integer setting the termination grace period for the cardano-producer pods |
 | producer.tolerations | list | `[]` | master.tolerations Tolerations for Cardano producer pods assignment ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/ |
 | redis.architecture | string | `"standalone"` | Single service exposed (redis-master) |
-| redis.auth.existingPasswordSecret | string | `"{{ .Release.Name }}-auth"` |  |
-| redis.auth.username | string | `""` |  |
+| redis.auth.existingSecret | string | `"{{ .Release.Name }}-auth"` | name of an existing secret that contains all of the required secrets |
 | redis.master.persistence.enabled | bool | `false` |  |
 | redis.networkPolicy.allowExternal | bool | `false` |  |
 | redis.networkPolicy.enabled | bool | `true` |  |
@@ -180,8 +178,6 @@ A Cardano Helm chart for Kubernetes
 | relay.startupProbe.timeoutSeconds | int | `5` | Timeout seconds for startupProbe |
 | relay.terminationGracePeriodSeconds | int | `30` | Integer setting the termination grace period for the cardano-relay pods |
 | relay.tolerations | list | `[]` | Tolerations for Cardano relay pods assignment ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/ |
-| secrets.redisPassword | string | `""` | Redis PubSub service password  |
-| secrets.redisUsername | string | `""` | Redis PubSub service username  |
 | service.annotations."service.beta.kubernetes.io/azure-dns-label-name" | string | `"stupidchess"` | Hostname to be assigned to the ELB for the service |
 | service.port | int | `6000` |  |
 | service.type | string | `"LoadBalancer"` |  |
