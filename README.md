@@ -105,13 +105,21 @@ helm repo add https://raw.githubusercontent.com/Azure/secrets-store-csi-driver-p
 helm install csi-secrets-store-provider-azure/csi-secrets-store-provider-azure --generate-name --set secrets-store-csi-driver.syncSecret.enabled=true --namespace kube-system
 ```
 
+Create a Kubernetes [secret](https://kubernetes.io/fr/docs/concepts/configuration/secret/) to secure internal Redis communication:
+
+```
+kubectl create secret generic redis-secret --from-literal=redis-username='cardano' --from-literal=redis-password='S!B\*d$zDsb'
+```
+
 Customize the options as needed, and install this Chart:
 
 ```
 helm repo add cardano https://regel.github.io/cardano-charts
 helm upgrade --install pool \
-  --namespace testnet \
   --values cardano/values.yaml \
+  --set redis.auth.existingSecret=redis-secret \
+  --set vault.csi.enabled=false \
+  --set producer.enabled=false \
     cardano/cardano
 ```
 
