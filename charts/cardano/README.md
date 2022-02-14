@@ -1,6 +1,6 @@
 # cardano
 
-![Version: 0.1.4](https://img.shields.io/badge/Version-0.1.4-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.33.1](https://img.shields.io/badge/AppVersion-1.33.1-informational?style=flat-square)
+![Version: 0.3.0](https://img.shields.io/badge/Version-0.3.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.33.1](https://img.shields.io/badge/AppVersion-1.33.1-informational?style=flat-square)
 
 A Cardano Helm chart for Kubernetes
 
@@ -18,7 +18,7 @@ A Cardano Helm chart for Kubernetes
 | admin | object | `{"pullPolicy":"IfNotPresent","repository":"inputoutput/cardano-node","tag":"1.33.1"}` | The admin pod is a special pod. This pod is air-gapped (nothing in, nothing out) and mounts cold keys from a Vault. Use this pod for admin operations such as KES key signature and node certificate signature |
 | busybox.pullPolicy | string | `"IfNotPresent"` |  |
 | busybox.repository | string | `"busybox"` |  |
-| busybox.tag | string | `""` |  |
+| busybox.tag | string | `"1.35.0"` |  |
 | curl.pullPolicy | string | `"IfNotPresent"` |  |
 | curl.repository | string | `"curlimages/curl"` |  |
 | curl.tag | string | `"7.80.0"` |  |
@@ -47,7 +47,24 @@ A Cardano Helm chart for Kubernetes
 | nameOverride | string | `""` |  |
 | networkPolicy | object | `{"enabled":true}` | Network Policy configuration ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/ recipes: https://github.com/ahmetb/kubernetes-network-policy-recipes |
 | networkPolicy.enabled | bool | `true` | Enable creation of NetworkPolicy resources |
-| p2p | object | `{"clioEnabled":true,"debug":false,"ekgTimeout":5,"enabled":true,"ipVersion":4,"livenessProbe":{"enabled":true,"failureThreshold":1,"initialDelaySeconds":60,"periodSeconds":10,"successThreshold":1,"timeoutSeconds":1},"maxPeers":10,"pullPolicy":"IfNotPresent","readinessProbe":{"enabled":true,"failureThreshold":10,"initialDelaySeconds":600,"periodSeconds":10,"successThreshold":1,"timeoutSeconds":1},"replicaCount":1,"repository":"regel/cardano-p2p","service":{"annotations":{},"port":6001,"type":"ClusterIP"},"tag":"v0.0.14","topic":"p2p"}` | P2P discovery configuration ref: https://github.com/regel/cardano-p2p |
+| ogmios.enabled | bool | `true` |  |
+| ogmios.pullPolicy | string | `"IfNotPresent"` |  |
+| ogmios.readinessProbe | object | `{"enabled":true,"failureThreshold":5,"initialDelaySeconds":20,"periodSeconds":5,"successThreshold":1,"timeoutSeconds":1}` | Configure readiness probe for ogmios sidecar container |
+| ogmios.readinessProbe.failureThreshold | int | `5` | Failure threshold for readinessProbe |
+| ogmios.readinessProbe.initialDelaySeconds | int | `20` | Initial delay seconds for readinessProbe |
+| ogmios.readinessProbe.periodSeconds | int | `5` | Period seconds for readinessProbe |
+| ogmios.readinessProbe.successThreshold | int | `1` | Success threshold for readinessProbe |
+| ogmios.readinessProbe.timeoutSeconds | int | `1` | Timeout seconds for readinessProbe |
+| ogmios.repository | string | `"cardanosolutions/ogmios"` |  |
+| ogmios.resources | object | `{"limits":{"cpu":"200m","memory":"100Mi"},"requests":{"cpu":"100m","memory":"100Mi"}}` | Cardano ogmios ws bridge resource requests and limits ref: http://kubernetes.io/docs/user-guide/compute-resources/ |
+| ogmios.resources.limits | object | `{"cpu":"200m","memory":"100Mi"}` | The resources limits for the Ogmios ws bridge container |
+| ogmios.resources.requests | object | `{"cpu":"100m","memory":"100Mi"}` | The requested resources for the Ogmios ws bridge container |
+| ogmios.securityContext.readOnlyRootFilesystem | bool | `true` |  |
+| ogmios.service.annotations | object | `{}` |  |
+| ogmios.service.port | int | `1337` |  |
+| ogmios.service.type | string | `"ClusterIP"` |  |
+| ogmios.tag | string | `"latest"` |  |
+| p2p | object | `{"clioEnabled":true,"debug":false,"ekgTimeout":5,"enabled":true,"ipVersion":4,"livenessProbe":{"enabled":true,"failureThreshold":1,"initialDelaySeconds":60,"periodSeconds":10,"successThreshold":1,"timeoutSeconds":1},"maxPeers":10,"probeTimeout":"1s","pullPolicy":"IfNotPresent","readinessProbe":{"enabled":true,"failureThreshold":10,"initialDelaySeconds":60,"periodSeconds":10,"successThreshold":1,"timeoutSeconds":1},"replicaCount":1,"repository":"regel/cardano-p2p","service":{"annotations":{},"port":8080,"type":"ClusterIP"},"tag":"v0.1.5","topic":"p2p"}` | P2P discovery configuration ref: https://github.com/regel/cardano-p2p |
 | p2p.clioEnabled | bool | `true` | Use 'clio' to push blockNo to the CLIO service |
 | p2p.enabled | bool | `true` | Enable peer to peer Cardano node discovery |
 | p2p.livenessProbe.enabled | bool | `true` | Enable livenessProbe on p2p node |
@@ -58,7 +75,7 @@ A Cardano Helm chart for Kubernetes
 | p2p.livenessProbe.timeoutSeconds | int | `1` | Timeout seconds for livenessProbe |
 | p2p.readinessProbe.enabled | bool | `true` | Enable readinessProbe on p2p nginx node |
 | p2p.readinessProbe.failureThreshold | int | `10` | Failure threshold for readinessProbe |
-| p2p.readinessProbe.initialDelaySeconds | int | `600` | Initial delay seconds for readinessProbe |
+| p2p.readinessProbe.initialDelaySeconds | int | `60` | Initial delay seconds for readinessProbe |
 | p2p.readinessProbe.periodSeconds | int | `10` | Period seconds for readinessProbe |
 | p2p.readinessProbe.successThreshold | int | `1` | Success threshold for readinessProbe |
 | p2p.readinessProbe.timeoutSeconds | int | `1` | Timeout seconds for readinessProbe |
@@ -107,7 +124,7 @@ A Cardano Helm chart for Kubernetes
 | producer.resources | object | `{"limits":{"cpu":"1","memory":"2048Mi"},"requests":{"cpu":"100m","memory":"512Mi"}}` | Cardano producer resource requests and limits ref: http://kubernetes.io/docs/user-guide/compute-resources/ |
 | producer.resources.limits | object | `{"cpu":"1","memory":"2048Mi"}` | The resources limits for the Cardano producer containers |
 | producer.resources.requests | object | `{"cpu":"100m","memory":"512Mi"}` | The requested resources for the Cardano producer containers |
-| producer.securityContext | object | `{}` |  |
+| producer.securityContext.readOnlyRootFilesystem | bool | `true` |  |
 | producer.shareProcessNamespace | bool | `false` | Share a single process namespace between all of the containers in Cardano producer pods ref: https://kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/ |
 | producer.spreadConstraints | object | `{}` | master.spreadConstraints Spread Constraints for Cardano producer pod assignment ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/ E.g. spreadConstraints:   - maxSkew: 1     topologyKey: node     whenUnsatisfiable: DoNotSchedule |
 | producer.startupProbe.enabled | bool | `true` | Enable startupProbe on Cardano producer nodes ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes |
@@ -127,13 +144,14 @@ A Cardano Helm chart for Kubernetes
 | redis.replica.persistence.enabled | bool | `false` |  |
 | redis.replica.replicaCount | int | `0` |  |
 | relay.affinity | object | `{}` | Affinity for Cardano relay pods assignment ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity NOTE: `master.podAffinityPreset`, `master.podAntiAffinityPreset`, and `master.nodeAffinityPreset` will be ignored when it's set |
-| relay.livenessProbe | object | `{"enabled":true,"failureThreshold":5,"initialDelaySeconds":20,"periodSeconds":60,"successThreshold":1,"timeoutSeconds":5}` | Configure extra options for Cardano relay containers' liveness and readiness probes |
+| relay.extraFlags | string | `"+RTS -c -RTS"` |  |
+| relay.livenessProbe | object | `{"enabled":true,"failureThreshold":5,"initialDelaySeconds":900,"periodSeconds":60,"successThreshold":1,"timeoutSeconds":1}` | Configure extra options for Cardano relay containers' liveness and readiness probes |
 | relay.livenessProbe.enabled | bool | `true` | Enable livenessProbe on Relay nodes ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes |
 | relay.livenessProbe.failureThreshold | int | `5` | Failure threshold for livenessProbe |
-| relay.livenessProbe.initialDelaySeconds | int | `20` | Initial delay seconds for livenessProbe |
+| relay.livenessProbe.initialDelaySeconds | int | `900` | Initial delay seconds for livenessProbe |
 | relay.livenessProbe.periodSeconds | int | `60` | Period seconds for livenessProbe |
 | relay.livenessProbe.successThreshold | int | `1` | Success threshold for livenessProbe |
-| relay.livenessProbe.timeoutSeconds | int | `5` | Timeout seconds for livenessProbe |
+| relay.livenessProbe.timeoutSeconds | int | `1` | Timeout seconds for livenessProbe |
 | relay.nodeAffinityPreset | object | `{"key":"","type":"","values":[]}` | Node master.affinity preset ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity |
 | relay.nodeAffinityPreset.key | string | `""` | Node label key to match. Ignored if `master.affinity` is set |
 | relay.nodeAffinityPreset.type | string | `""` | Node affinity preset type. Ignored if `master.affinity` is set. Allowed values: `soft` or `hard` |
@@ -144,17 +162,18 @@ A Cardano Helm chart for Kubernetes
 | relay.readinessProbe.enabled | bool | `true` |  |
 | relay.readinessProbe.failureThreshold | int | `5` | Failure threshold for readinessProbe |
 | relay.readinessProbe.initialDelaySeconds | int | `20` | Initial delay seconds for readinessProbe |
-| relay.readinessProbe.periodSeconds | int | `5` | Period seconds for readinessProbe |
+| relay.readinessProbe.periodSeconds | int | `10` | Period seconds for readinessProbe |
 | relay.readinessProbe.successThreshold | int | `1` | Success threshold for readinessProbe |
-| relay.readinessProbe.timeoutSeconds | int | `1` | Timeout seconds for readinessProbe |
+| relay.readinessProbe.timeoutSeconds | int | `5` | Timeout seconds for readinessProbe |
 | relay.replicaCount | int | `1` |  |
 | relay.resources | object | `{"limits":{"cpu":"1","memory":"4096Mi"},"requests":{"cpu":"100m","memory":"512Mi"}}` | Cardano relay resource requests and limits ref: http://kubernetes.io/docs/user-guide/compute-resources/ |
 | relay.resources.limits | object | `{"cpu":"1","memory":"4096Mi"}` | The resources limits for the Cardano relay containers |
 | relay.resources.requests | object | `{"cpu":"100m","memory":"512Mi"}` | The requested resources for the Cardano relay containers |
-| relay.shareProcessNamespace | bool | `false` | Share a single process namespace between all of the containers in Cardano relay pods ref: https://kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/ |
+| relay.securityContext.readOnlyRootFilesystem | bool | `true` |  |
+| relay.shareProcessNamespace | bool | `true` | Share a single process namespace between all of the containers in Cardano relay pods ref: https://kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/ |
 | relay.spreadConstraints | object | `{}` | Spread Constraints for Cardano relay pod assignment ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/ E.g. spreadConstraints:   - maxSkew: 1     topologyKey: node     whenUnsatisfiable: DoNotSchedule |
 | relay.startupProbe.enabled | bool | `true` | Enable startupProbe on Relay nodes ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes |
-| relay.startupProbe.failureThreshold | int | `1440` | Failure threshold for startupProbe failureThreshold * periodSeconds = 24 hours and must be > than time to download the blockchain |
+| relay.startupProbe.failureThreshold | int | `60` | Failure threshold for startupProbe failureThreshold * periodSeconds = 1 hour. |
 | relay.startupProbe.initialDelaySeconds | int | `60` | Initial delay seconds for startupProbe |
 | relay.startupProbe.periodSeconds | int | `60` | Period seconds for startupProbe |
 | relay.startupProbe.successThreshold | int | `1` | Success threshold for startupProbe |
