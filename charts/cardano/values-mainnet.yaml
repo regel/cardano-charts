@@ -23,8 +23,9 @@ redis:
     persistence:
       enabled: false
   auth:
-    username: ""
-    existingPasswordSecret: '{{ .Release.Name }}-auth'
+    # -- name of an existing secret that contains all of the required secrets
+    existingSecret: '{{ .Release.Name }}-auth'
+
 
 image:
   repository: inputoutput/cardano-node
@@ -90,15 +91,6 @@ environment:
   # -- name of the Cardano network to use. Either 'testnet' or 'mainnet'
   name: mainnet
 
-# -- name of an existing secret that contains all of the required secrets
-existingSecret: '{{ .Release.Name }}-auth'
-
-
-secrets:
-  # -- Redis PubSub service username 
-  redisUsername: ""
-  # -- Redis PubSub service password 
-  redisPassword: ""
 
 vault:
   csi:
@@ -227,7 +219,7 @@ p2p:
     # -- Enable readinessProbe on p2p nginx node
     enabled: true
     # -- Initial delay seconds for readinessProbe
-    initialDelaySeconds: 60
+    initialDelaySeconds: 10
     # -- Period seconds for readinessProbe
     periodSeconds: 10
     # -- Timeout seconds for readinessProbe

@@ -61,8 +61,8 @@ Get the configmap name.
 Get the auth secret.
 */}}
 {{- define "cardano.secretName" -}}
-{{- if .Values.existingSecret -}}
-    {{- printf "%s" (tpl .Values.existingSecret $) -}}
+{{- if .Values.redis.auth.existingSecret -}}
+    {{- printf "%s" (tpl .Values.redis.auth.existingSecret $) -}}
 {{- else -}}
     {{- printf "%s" (include "cardano.fullname" .) -}}
 {{- end -}}
