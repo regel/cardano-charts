@@ -1,18 +1,45 @@
 
+Thank you for installing {{ .Chart.Name }}.
 
-1. Get node address:
-{{- if contains "NodePort" .Values.service.type }}
-  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "cardano.fullname" . }})
-  export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
-  echo $NODE_IP:$NODE_PORT
-{{- else if contains "LoadBalancer" .Values.service.type }}
-     NOTE: It may take a few minutes for the LoadBalancer IP to be available.
-           You can watch the status of by running 'kubectl get --namespace {{ .Release.Namespace }} svc -w {{ include "cardano.fullname" . }}'
-  export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "cardano.fullname" . }} --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
-  echo "Your public node address is: $SERVICE_IP:{{ .Values.service.port }}"
-  echo "The node will be 'up' when it is fully synchronized with the blockchain. This can take several hours if this is the first installation of the Chart"
-  echo "Environment: {{ .Values.environment.name }}"
-  echo "Persistence enabled: {{ .Values.persistence.enabled }}"
-{{- else if contains "ClusterIP" .Values.service.type }}
-  export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/name={{ include "cardano.name" . }},app.kubernetes.io/instance={{ .Release.Name }}" -o jsonpath="{.items[0].metadata.name}")
+Your release is named {{ .Release.Name }}.
+
+Your Cardano network is {{ .Values.environment.name }}
+
+To learn more about the release, try:
+
+  $ helm status {{ .Release.Name }}
+  $ helm get all {{ .Release.Name }}
+
+{{- if contains "LoadBalancer" .Values.service.type }}
+
+Your external IP is exposed via a Load Balancer.
+
+  NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+        You can watch the status of by running 'kubectl get --namespace {{ .Release.Namespace }} svc -w {{ include "cardano.fullname" . }}'
+  $ export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "cardano.fullname" . }} --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+  $ echo "Your public node address is: $SERVICE_IP:{{ .Values.service.port }}"
+
+{{- end }}
+
+Your  node must be fully synchronized with the blockchain. This can take several hours if this is the first installation of the Chart, so please be patient.
+
+{{- if eq .Values.environment.name "testnet" }}
+
+To query the blockchain tip, try:
+
+  $ kubectl exec -ti -n {{ .Release.Namespace }} {{ include "cardano.fullname" . }}-relay-0 -c node -- cardano-cli query tip --testnet-magic 1097911063
+{{- end }}
+{{- if eq .Values.environment.name "mainnet" }}
+
+To query the blockchain tip, try:
+
+  $ kubectl exec -ti -n {{ .Release.Namespace }} {{ include "cardano.fullname" . }}-relay-0 -c node -- cardano-cli query tip --mainnet
+{{- end }}
+
+{{- if .Values.ogmios.enabled }}
+
+Visit http://127.0.0.1:8080 to open the Ogmios interface. The interface can be used after forwarding port 1337 to localhost port 8080:
+
+  $ export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/component=relay" -o jsonpath="{.items[0].metadata.name}")
+  $ kubectl port-forward $POD_NAME 8080:1337
 {{- end }}
