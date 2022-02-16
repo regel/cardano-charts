@@ -41,5 +41,5 @@ To query the blockchain tip, try:
 Visit http://127.0.0.1:8080 to open the Ogmios interface. The interface can be used after forwarding port 1337 to localhost port 8080:
 
   $ export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/component=relay" -o jsonpath="{.items[0].metadata.name}")
-  $ kubectl port-forward $POD_NAME 8080:1337
+  $ kubectl port-forward -n {{ .Release.Namespace }} $POD_NAME 8080:1337
 {{- end }}
