@@ -26,9 +26,9 @@ sponsor](https://opencollective.com/gh-regel#sponsor)]
 
 Cardano hodlers can send donations to this wallet address: `addr1q973kf48y9vxqareqvxr7flacx3pl3rz0m9lmwt4nej0zr99dw6mre74f2g48nntw5ar6mz58fm09sk70e0k4vgmkess27g47n`
 
-### No Donations :gift: :neutral_face:
+## Demo
 
-Star :100: this repo and send this message on Twitter: I :hearts: u Charles
+![helm install](./recording/render1645130824759-min.gif)
 
 ## Security Measures Every Stake Pool Operator Should Implement
 
