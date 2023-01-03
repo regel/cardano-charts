@@ -23,17 +23,12 @@ Your external IP is exposed via a Load Balancer.
 
 Your  node must be fully synchronized with the blockchain. This can take several hours if this is the first installation of the Chart, so please be patient.
 
-{{- if eq .Values.environment.name "testnet" }}
-
 To query the blockchain tip, try:
 
-  $ kubectl exec -ti -n {{ .Release.Namespace }} {{ include "cardano.fullname" . }}-relay-0 -c node -- cardano-cli query tip --testnet-magic 1097911063
-{{- end }}
 {{- if eq .Values.environment.name "mainnet" }}
-
-To query the blockchain tip, try:
-
   $ kubectl exec -ti -n {{ .Release.Namespace }} {{ include "cardano.fullname" . }}-relay-0 -c node -- cardano-cli query tip --mainnet
+{{- else }}
+  $ kubectl exec -ti -n {{ .Release.Namespace }} {{ include "cardano.fullname" . }}-relay-0 -c node -- cardano-cli query tip --testnet-magic {{ include "cardano.networkMagic" . }}
 {{- end }}
 
 {{- if .Values.ogmios.enabled }}

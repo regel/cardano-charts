@@ -61,10 +61,23 @@ Get the configmap name.
 Get the auth secret.
 */}}
 {{- define "cardano.secretName" -}}
-{{- if .Values.redis.auth.existingSecret -}}
-    {{- printf "%s" (tpl .Values.redis.auth.existingSecret $) -}}
+{{- printf "%s" (include "cardano.fullname" .) -}}
+{{- end -}}
+
+{{/*
+Get the network magic
+*/}}
+{{- define "cardano.networkMagic" -}}
+{{- if eq .Values.environment.name "testnet"  -}}
+    {{- printf "1" -}}
+{{- else if eq .Values.environment.name "preprod"  -}}
+    {{- printf "1" -}}
+{{- else if eq .Values.environment.name "preview"  -}}
+    {{- printf "2" -}}
+{{- else if eq .Values.environment.name "mainnet"  -}}
+    {{- printf "764824073" -}}
 {{- else -}}
-    {{- printf "%s" (include "cardano.fullname" .) -}}
+    {{- fail "value for .Values.environment.name is not supported" }}
 {{- end -}}
 {{- end -}}
 

@@ -6,39 +6,20 @@
 # global.storageClass -- Global StorageClass for Persistent Volume(s)
 global:
   storageClass:
-  redis:
-    servicePort: 6379
-
-redis:
-  # -- Single service exposed (redis-master)
-  architecture: standalone
-  networkPolicy:
-    enabled: true
-    allowExternal: false
-  master:
-    persistence:
-      enabled: false
-  replica:
-    replicaCount: 0
-    persistence:
-      enabled: false
-  auth:
-    # -- name of an existing secret that contains all of the required secrets
-    existingSecret: '{{ .Release.Name }}-auth'
 
 
 image:
   repository: inputoutput/cardano-node
   pullPolicy: IfNotPresent
   # -- Overrides the image tag whose default is the chart appVersion. See [here](https://hub.docker.com/r/inputoutput/cardano-node/tags?page=1&ordering=last_updated) the full list of tags.
-  tag: "1.33.1"
+  tag: "1.35.4"
 
 # -- The admin pod is a special pod. This pod is air-gapped (nothing in, nothing out) and mounts cold keys from a Vault.
 # Use this pod for admin operations such as KES key signature and node certificate signature
 admin:
   repository: inputoutput/cardano-node
   pullPolicy: IfNotPresent
-  tag: "1.33.1"
+  tag: "1.35.4"
 
 busybox:
   repository: busybox
@@ -46,9 +27,9 @@ busybox:
   tag: "1.35.0"
 
 curl:
-  repository: "curlimages/curl"
+  repository: "ghcr.io/regel/lz4"
   pullPolicy: IfNotPresent
-  tag: "7.80.0"
+  tag: "0.0.3"
 
 liveness:
   repository: alpine
@@ -59,15 +40,6 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
-serviceAccount:
-  # -- Specifies whether a service account should be created
-  create: true
-  # -- Annotations to add to the service account
-  annotations: {}
-  # -- The name of the service account to use.
-  # If not set and create is true, a name is generated using the fullname template
-  name: ""
-
 podAnnotations:
   prometheus.io/scrape: 'true'
   prometheus.io/port: '12789'
@@ -75,6 +47,7 @@ podAnnotations:
 podSecurityContext:
   runAsNonRoot: true
   runAsUser: 65532
+  runAsGroup: 65532
   fsGroup: 65532
   seccompProfile:
     type: RuntimeDefault
@@ -168,11 +141,11 @@ ogmios:
     # -- The resources limits for the Ogmios ws bridge container
     limits:
       cpu: "200m"
-      memory: "100Mi"
+      memory: "400Mi"
     # -- The requested resources for the Ogmios ws bridge container
     requests:
       cpu: "100m"
-      memory: "100Mi"
+      memory: "400Mi"
   service:
     annotations: {}
     type: ClusterIP
@@ -180,64 +153,23 @@ ogmios:
 
 
 # -- P2P discovery configuration
-# ref: https://github.com/regel/cardano-p2p
 p2p:
-  replicaCount: 1
-
-  # -- Repository of the cardano-p2p image
-  # ref: https://hub.docker.com/r/regel/cardano-p2p
-  repository: regel/cardano-p2p
-  pullPolicy: IfNotPresent
-  tag: "v0.1.5"
   # -- Enable peer to peer Cardano node discovery
   enabled: true
-  # -- Use 'clio' to push blockNo to the CLIO service
-  clioEnabled: true
-
-  debug: false
-  topic: "p2p"
-  ipVersion: 4
-  maxPeers: 10
-  ekgTimeout: 5
-  probeTimeout: "1s"
-
-  livenessProbe:
-    # -- Enable livenessProbe on p2p node
-    enabled: true
-    # -- Initial delay seconds for livenessProbe
-    initialDelaySeconds: 60
-    # -- Period seconds for livenessProbe
-    periodSeconds: 10
-    # -- Timeout seconds for livenessProbe
-    timeoutSeconds: 1
-    # -- Success threshold for livenessProbe
-    successThreshold: 1
-    # -- Failure threshold for livenessProbe
-    failureThreshold: 1
-
-  readinessProbe:
-    # -- Enable readinessProbe on p2p nginx node
-    enabled: true
-    # -- Initial delay seconds for readinessProbe
-    initialDelaySeconds: 10
-    # -- Period seconds for readinessProbe
-    periodSeconds: 10
-    # -- Timeout seconds for readinessProbe
-    timeoutSeconds: 1
-    # -- Success threshold for readinessProbe
-    successThreshold: 1
-    # -- Failure threshold for readinessProbe
-    failureThreshold: 10
-
-  service:
-    annotations: {}
-    type: ClusterIP
-    port: 8080
 
 
 relay:
   # -- GHC RTS flags. Descriptions of flags can be seen in GHC User's Guide, or by running RTS help message using +RTS --help
-  extraFlags: ""
+  # -N2 tells the RTS to dispatch the programs threads on 2 cpus (using -N without a number will make it use all the CPUs available)
+  # --disable-delayed-os-memory-return tells the RTS to use a different and less optimized way to release memory so that GNU/Linux performance tools such as top and htop report the correct amount of resident memory being used (mostly useless as explained above)
+  # -I0.3 tells the RTS to perform a major GC if the node has been idle for 0.3s
+  # -Iw600 tells the RTS to perform the above major GC only if the last one happened more than 10 minutes ago
+  # -A16m is the size of the new block allocated in the hot zone, it should be adapted according to the number of cpu you configured with the -N parameter
+  # -F1.5 roughly tells the RTS to keep allocated 1.5 times more than the amount of live data it found when it started its last major GC
+  # -H2500M forces the RTS to allocate 2.5GB of RAM at startup and keep this minimum allocated
+  # -T makes the RTS statistics available programmatically
+  # -S makes the node print various garbage collection statistics on the standard error output
+  extraFlags: "+RTS -N2 --disable-delayed-os-memory-return -I0.3 -Iw600 -A16m -F1.5 -H2500M -T -S  -RTS"
 
   replicaCount: 1
 
@@ -343,10 +275,13 @@ relay:
   securityContext:
     readOnlyRootFilesystem: true
 #    runAsNonRoot: true
-#    runAsUser: 1001
+#    runAsUser: 65532
 
 
 producer:
+  # -- GHC RTS flags. Descriptions of flags can be seen in GHC User's Guide, or by running RTS help message using +RTS --help
+  extraFlags: "+RTS -N2 --disable-delayed-os-memory-return -I0.3 -Iw600 -A16m -F1.5 -H2500M -T -S  -RTS"
+
   replicaCount: 1
   enabled: true
 
@@ -449,7 +384,7 @@ producer:
   securityContext:
     readOnlyRootFilesystem: true
 #    runAsNonRoot: true
-#    runAsUser: 1001
+#    runAsUser: 65532
 
 
 persistence:
@@ -475,7 +410,7 @@ persistence:
   accessModes:
     - ReadWriteOnce
   # -- PVC Storage Request for data volume
-  size: 128Gi
+  size: 200Gi
   # -- Annotations for the PVC
   annotations: {}
   # -- Selector to match an existing Persistent Volume (this value is evaluated as a template)
@@ -486,7 +421,7 @@ persistence:
   # -- Source file to download and uncompress if the PVC is empty
   sourceFile:
     # -- Enable restore of the ledger database
-    enabled: false
-    # -- download url of the ledger database archive. The tar.gz archive must contain the content of cardano 'db' directory.
+    enabled: true
+    # -- download url of the ledger database archive. The tar.lz4 archive must contain the content of cardano 'db' directory.
     # Store this file on a CDN or Azure Blob storage container to speed up download times.
-    url: ""
+    url: "https://downloads.csnapshots.io/snapshots/mainnet/mainnet-db-81184503.tar.lz4"

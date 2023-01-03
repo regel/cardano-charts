@@ -6,8 +6,9 @@ metadata:
 data:
 {{ (tpl (.Files.Glob "files/readiness.sh").AsConfig . ) | indent 2 }}
 {{ (tpl (.Files.Glob "files/testnet/producer-topology.json").AsConfig . ) | indent 2 }}
+{{ (tpl (.Files.Glob "files/testnet/producer-config.json").AsConfig . ) | indent 2 }}
 {{ (tpl (.Files.Glob "files/testnet/relay-topology.json").AsConfig . ) | indent 2 }}
-{{ (tpl (.Files.Glob "files/testnet/config.json").AsConfig . ) | indent 2 }}
+{{ (tpl (.Files.Glob "files/testnet/relay-config.json").AsConfig . ) | indent 2 }}
 binaryData:
 {{- $root := . }}
 {{- $location := "files/testnet/*.json.gz" }}

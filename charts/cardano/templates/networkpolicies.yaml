@@ -1,7 +1,7 @@
 {{- if .Values.networkPolicy.enabled }}
 ---
 kind: NetworkPolicy
-apiVersion: {{ template "networkPolicy.apiVersion" . }}
+apiVersion: {{ template "common.capabilities.networkPolicy.apiVersion" . }}
 metadata:
   namespace: {{ .Release.Namespace | quote }}
   name: deny-from-other-namespaces
@@ -17,12 +17,13 @@ spec:
   - from:
     - podSelector: {}
 ---
-apiVersion: {{ template "networkPolicy.apiVersion" . }}
+apiVersion: {{ template "common.capabilities.networkPolicy.apiVersion" . }}
 kind: NetworkPolicy
 metadata:
   name: producer-allow-ingress
   namespace: {{ .Release.Namespace | quote }}
   labels:
+    app.kubernetes.io/component: producer
     {{- include "cardano.labels" . | nindent 4 }}
   annotations:
   {{- if .Values.commonAnnotations }}
@@ -45,12 +46,14 @@ spec:
         matchLabels:
           kubernetes.io/metadata.name: {{ .Release.Namespace | quote }}
 ---
-apiVersion: {{ template "networkPolicy.apiVersion" . }}
+apiVersion: {{ template "common.capabilities.networkPolicy.apiVersion" . }}
 kind: NetworkPolicy
 metadata:
   name: producer-deny-external-egress
   namespace: {{ .Release.Namespace | quote }}
-  labels: {{- include "cardano.labels" . | nindent 4 }}
+  labels:
+    app.kubernetes.io/component: producer
+    {{- include "cardano.labels" . | nindent 4 }}
   annotations:
   {{- if .Values.commonAnnotations }}
   {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
@@ -72,11 +75,13 @@ spec:
     - namespaceSelector: {}
 ---
 kind: NetworkPolicy
-apiVersion: {{ template "networkPolicy.apiVersion" . }}
+apiVersion: {{ template "common.capabilities.networkPolicy.apiVersion" . }}
 metadata:
   name: relay-allow-external
   namespace: {{ .Release.Namespace | quote }}
-  labels: {{- include "cardano.labels" . | nindent 4 }}
+  labels:
+    app.kubernetes.io/component: relay
+    {{- include "cardano.labels" . | nindent 4 }}
   annotations:
   {{- if .Values.commonAnnotations }}
   {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
@@ -91,26 +96,7 @@ spec:
     - port: 3001
 ---
 kind: NetworkPolicy
-apiVersion: {{ template "networkPolicy.apiVersion" . }}
-metadata:
-  name: updater-allow-external
-  namespace: {{ .Release.Namespace | quote }}
-  labels: {{- include "cardano.labels" . | nindent 4 }}
-  annotations:
-  {{- if .Values.commonAnnotations }}
-  {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
-  {{- end }}
-spec:
-  podSelector:
-    matchLabels:
-      app.kubernetes.io/component: updater
-      {{- include "cardano.selectorLabels" . | nindent 6 }}
-  ingress:
-  - ports:
-    - port: 3001
----
-kind: NetworkPolicy
-apiVersion: {{ template "networkPolicy.apiVersion" . }}
+apiVersion: {{ template "common.capabilities.networkPolicy.apiVersion" . }}
 metadata:
   name: allow-metrics
   namespace: {{ .Release.Namespace | quote }}
@@ -129,7 +115,7 @@ spec:
 {{- end }}
 ---
 kind: NetworkPolicy
-apiVersion: {{ template "networkPolicy.apiVersion" . }}
+apiVersion: {{ template "common.capabilities.networkPolicy.apiVersion" . }}
 metadata:
   name: air-gapped  # nothing in, nothing out
   namespace: {{ .Release.Namespace | quote }}

@@ -2,21 +2,41 @@
 {{- $namespace := .Release.Namespace }}
 {{- $replicaCount := .Values.producer.replicaCount | int }}
 
-{
-  "Producers": [
-    {
-      "addr": "relays-new.cardano-testnet.iohkdev.io",
-      "port": 3001,
-      "valency": 2
-    }
+{{- $producers := list }}
 {{- if .Values.producer.enabled }}
 {{- range $index, $value := until $replicaCount }}
-    ,{
-      "addr": "{{ $fullName }}-producer-{{ $index }}.{{ $fullName }}-headless.{{ $namespace }}.svc.cluster.local",
-      "port": 3001,
-      "valency": 1
+  {{- $addr := printf "%s-producer-%d.%s-headless.%s.svc.cluster.local" $fullName $index $fullName $namespace }}
+  {{- $item := dict "addr" $addr "port" 3001 "valency" 1 }}
+  {{- $producers = prepend $producers $item }}
+{{- end }}
+{{- end }}
+
+{
+  "Producers":
+  {{- toPrettyJson $producers | indent 4 }},
+  "LocalRoots": {
+    "groups": [
+      {
+        "localRoots": {
+          "accessPoints": [],
+          "advertise": false
+        },
+        "valency": 1
+      }
+    ]
+  },
+  "PublicRoots": [
+    {
+      "publicRoots": {
+        "accessPoints": [
+          {
+            "address": "preprod-node.world.dev.cardano.org",
+            "port": 30000
+          }
+        ],
+        "advertise": false
+      }
     }
-{{- end }}
-{{- end }}
-  ]
+  ],
+  "useLedgerAfterSlot": 4642000
 }

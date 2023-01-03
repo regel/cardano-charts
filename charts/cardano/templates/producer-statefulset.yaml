@@ -80,7 +80,7 @@ spec:
           args:
             - cp /config/*-genesis.json.gz /genesis ;
               gunzip /genesis/*.gz ;
-              cp /config/config.json /genesis ;
+              cp /config/producer-config.json /genesis/config.json ;
               cp /config/producer-topology.json /genesis/topology.json ;
           volumeMounts:
             - name: genesis
@@ -93,7 +93,7 @@ spec:
         - name: genesis-large
           securityContext:
             {{- toYaml .Values.producer.securityContext | nindent 12 }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["/bin/sh", "-c"]
           args:
@@ -102,28 +102,29 @@ spec:
             - name: genesis
               mountPath: /genesis
         {{- end }}
-        {{- if .Values.producer.securityContext.runAsNonRoot }}  # https://github.com/kubernetes/kubernetes/issues/81089
-        - name: set-key-ownership
+        # https://github.com/kubernetes/kubernetes/issues/81089
+        - name: set-key-ownership  # remove all "other" file permissions else node fails to start
           securityContext:
-            {{- toYaml .Values.producer.securityContext | nindent 12 }}
-          image: "{{- .Values.busybox.repository -}}:{{- .Values.busybox.tag | default .Chart.AppVersion -}}"
+            runAsNonRoot: false
+            runAsUser: 0
+          image: "{{- .Values.busybox.repository -}}:{{- .Values.busybox.tag -}}"
           imagePullPolicy: {{ .Values.busybox.pullPolicy }}
           command: ["sh", "-c"]
           args:
             - cp /root-key/* /key ;
-              chown -R {{ .Values.producer.securityContext.runAsUser }}:{{ .Values.producer.securityContext.runAsUser }} /key ;
-              chmod -R 0400 /key ;
+              chown -R {{ .Values.podSecurityContext.runAsUser }}:{{ .Values.podSecurityContext.runAsGroup }} /key ;
+              find /key -type f -exec chmod 0400 {} \;
           volumeMounts:
           - mountPath: /key
             name: vault
           - mountPath: /root-key
-            name: root-owned-vault
+            name: root-vault
             readOnly: true
-        {{- end }}
+
         {{- if and .Values.persistence.enabled .Values.persistence.sourceFile.enabled }}
         - name: restore
           securityContext:
-            {{- toYaml .Values.producer.securityContext | nindent 12 }}
+            {{- toYaml .Values.relay.securityContext | nindent 12 }}
           image: "{{ .Values.curl.repository }}:{{ .Values.curl.tag }}"
           imagePullPolicy: {{ .Values.curl.pullPolicy }}
           command: ["/bin/sh", "-c"]
@@ -132,7 +133,7 @@ spec:
               if [ -d "{{ .Values.persistence.mountPath }}/db" ]; then
                 exit 0 ;
               fi ;
-              cd "{{ .Values.persistence.mountPath }}" && curl -L "{{ .Values.persistence.sourceFile.url }}" | tar -xz ;
+              cd "{{ .Values.persistence.mountPath }}" && curl -o - "{{ .Values.persistence.sourceFile.url }}" | lz4 -c -d - | tar -x ;
           volumeMounts:
             - name: data
               mountPath: {{ .Values.persistence.mountPath }}
@@ -145,17 +146,21 @@ spec:
             {{- toYaml .Values.producer.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/bin/sh", "-c"]
           args:
-            - run
-            - --config /config/config.json
-            - --topology /config/topology.json
-            - --database-path /data/db
-            - --host-addr 0.0.0.0
-            - --port 3001
-            - --socket-path /ipc/node.socket
-            - --shelley-kes-key /vault/kesSkey
-            - --shelley-vrf-key /vault/vrfSkey
-            - --shelley-operational-certificate /vault/nodeCert
+            - set -e ;
+              $(readlink -e /nix/store/*-cardano-node-exe-*/bin/cardano-node)
+              run
+              --config /config/config.json
+              --topology /config/topology.json
+              --database-path /data/db
+              --host-addr 0.0.0.0
+              --port 3001
+              --socket-path /ipc/node.socket
+              --shelley-kes-key /vault/kesSkey
+              --shelley-vrf-key /vault/vrfSkey
+              --shelley-operational-certificate /vault/nodeCert
+              {{ .Values.producer.extraFlags }} ;
           volumeMounts:
             - name: readiness-probe
               mountPath: /opt/readiness.sh
@@ -165,11 +170,7 @@ spec:
             - name: genesis
               mountPath: /config
               readOnly: true
-            {{- if .Values.producer.securityContext.runAsNonRoot }}
             - name: vault
-            {{- else }}
-            - name: root-owned-vault
-            {{- end }}
               mountPath: /vault
               readOnly: true
             {{- if .Values.persistence.enabled }}
@@ -225,7 +226,7 @@ spec:
             {{- toYaml .Values.producer.resources | nindent 12 }}
 
       volumes:
-        - name: root-owned-vault
+        - name: root-vault
         {{- if .Values.vault.csi.enabled }}
           csi:
             driver: secrets-store.csi.k8s.io
@@ -235,9 +236,7 @@ spec:
         {{- else }}
           secret:
             secretName: {{ template "cardano.secretName" . }}
-        {{- if not .Values.producer.securityContext.runAsNonRoot }}
             defaultMode: 256  # 0400 permissions
-        {{- end }}
         {{- end }}
         - name: vault
           emptyDir:

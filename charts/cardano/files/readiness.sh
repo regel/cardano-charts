@@ -3,10 +3,10 @@
 EPOCH='"epoch": ([0-9]*)'
 PROGRESS='"syncProgress": "([0-9.]*)"'
 
-{{- if eq .Values.environment.name "testnet" }}
-STR=$(cardano-cli query tip --testnet-magic 1097911063)
-{{- else }}
+{{- if eq .Values.environment.name "mainnet" }}
 STR=$(cardano-cli query tip --mainnet)
+{{- else }}
+STR=$(cardano-cli query tip --testnet-magic {{ include "cardano.networkMagic" . }})
 {{- end }}
 
 if [[ "$STR" =~ $PROGRESS ]]; then

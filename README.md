@@ -105,19 +105,12 @@ helm repo add https://raw.githubusercontent.com/Azure/secrets-store-csi-driver-p
 helm install csi-secrets-store-provider-azure/csi-secrets-store-provider-azure --generate-name --set secrets-store-csi-driver.syncSecret.enabled=true --namespace kube-system
 ```
 
-Create a Kubernetes [secret](https://kubernetes.io/fr/docs/concepts/configuration/secret/) to secure internal Redis communication:
-
-```
-kubectl create secret generic redis-secret --from-literal=redis-username='cardano' --from-literal=redis-password='S!B\*d$zDsb'
-```
-
 Customize the options as needed, and install this Chart:
 
 ```
 helm repo add cardano https://regel.github.io/cardano-charts
 helm upgrade --install pool \
   --values cardano/values.yaml \
-  --set redis.auth.existingSecret=redis-secret \
   --set vault.csi.enabled=false \
   --set producer.enabled=false \
     cardano/cardano
@@ -131,8 +124,27 @@ Change the pod namespace and `cardano-cli` options according to the chain id, ch
 kubectl exec -ti -n mainnet mainnet-cardano-relay-0 -c node -- cardano-cli query tip --mainnet
 ```
 
-On testnet, run:
+## FAQ
+
+### Solving Init:Error when producer starts for the first time
+
+Synchronizing the Cardano blockchain from scratch takes a long time. To prevent long waiting times, the Init container
+attempts to download a snapshot of the blockchain during their first installation. However, egress traffic
+is blocked for producer nodes and the 'restore' init container cannot download the snapshot:
 
 ```
-kubectl exec -ti -n testnet testnet-cardano-relay-0 -c node -- cardano-cli query tip --testnet-magic 1097911063
+$ kubectl get po -w
+NAME                     READY   STATUS     RESTARTS   AGE
+pool-cardano-producer-0  0/1     Init:3/4   0          46s
+pool-cardano-relay-0     2/2     Running    0          52m
+pool-cardano-producer-0  0/1     Init:Error   0          2m35s
 ```
+
+The workaround is to disable network policies manually during Init:
+
+```
+$ kubectl delete networkpolicy -l app.kubernetes.io/name=cardano,app.kubernetes.io/component=producer
+```
+
+Enable policies again with `helm upgrade` when the producer node is running.
+

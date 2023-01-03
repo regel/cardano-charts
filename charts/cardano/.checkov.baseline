@@ -14,33 +14,6 @@
             ]
         },
         {
-            "file": "/cardano/templates/p2p-deployment.yaml",
-            "findings": [
-                {
-                    "resource": "Deployment.default.release-name-cardano-p2p",
-                    "check_ids": [
-                        "CKV_K8S_15",
-                        "CKV_K8S_43"
-                    ]
-                }
-            ]
-        },
-        {
-            "file": "/cardano/templates/topology-updater-pull.yaml",
-            "findings": [
-                {
-                    "resource": "CronJob.default.release-name-topology-updater-pull",
-                    "check_ids": [
-                        "CKV_K8S_15",
-                        "CKV_K8S_20",
-                        "CKV_K8S_31",
-                        "CKV_K8S_35",
-                        "CKV_K8S_43"
-                    ]
-                }
-            ]
-        },
-        {
             "file": "/cardano/templates/admin-deployment.yaml",
             "findings": [
                 {
@@ -48,21 +21,6 @@
                     "check_ids": [
                         "CKV_K8S_15",
                         "CKV_K8S_20",
-                        "CKV_K8S_43"
-                    ]
-                }
-            ]
-        },
-        {
-            "file": "/cardano/templates/topology-updater-push.yaml",
-            "findings": [
-                {
-                    "resource": "CronJob.default.release-name-topology-updater-push",
-                    "check_ids": [
-                        "CKV_K8S_15",
-                        "CKV_K8S_20",
-                        "CKV_K8S_31",
-                        "CKV_K8S_35",
                         "CKV_K8S_43"
                     ]
                 }

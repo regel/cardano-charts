@@ -1,5 +1,4 @@
 {{- $fullName := include "cardano.fullname" . }}
-{{- $p2pHost := printf "%s-p2p.%s" $fullName .Release.Namespace }}
 
 apiVersion: {{ include "common.capabilities.statefulset.apiVersion" . }}
 kind: StatefulSet
@@ -35,7 +34,6 @@ spec:
     {{- end }}
       labels:
         app.kubernetes.io/component: relay
-        {{ .Release.Name }}-redis-client: "true"
         {{- include "cardano.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
@@ -80,7 +78,7 @@ spec:
           args:
             - cp /config/*-genesis.json.gz /genesis ;
               gunzip /genesis/*.gz ;
-              cp /config/config.json /genesis ;
+              cp /config/relay-config.json /genesis/config.json ;
               cp /config/relay-topology.json /genesis/topology.json ;
           volumeMounts:
             - name: genesis
@@ -88,41 +86,6 @@ spec:
             - name: config
               mountPath: /config
               readOnly: true
-
-        {{- if .Values.p2p.enabled }}
-          {{ include "cardano.readiness.waitForP2p" . | nindent 8 }}
-        - name: pull
-          securityContext:
-            {{- toYaml .Values.relay.securityContext | nindent 12 }}
-          image: "{{- .Values.p2p.repository -}}:{{- .Values.p2p.tag -}}"
-          imagePullPolicy: {{ .Values.p2p.pullPolicy }}
-          args:
-            - fetch
-            - --endpoint-url
-            - "http://{{- $p2pHost -}}:{{ .Values.p2p.service.port }}"
-            - --output
-            - /genesis/topology.json
-            {{- if .Values.producer.enabled }}
-            - --custom-peers
-            - "{{ $fullName }}-producer-0.{{ $fullName }}-headless.{{ .Release.Namespace }}.svc.cluster.local,3001,1"
-            {{- end }}
-            - --network
-            {{- if eq .Values.environment.name "mainnet" }}
-            - "764824073"
-            {{- end }}
-            {{- if eq .Values.environment.name "testnet" }}
-            - "1097911063"
-            {{- end }}
-            - --config
-            - /p2p.yaml
-          volumeMounts:
-            - name: p2p
-              mountPath: /p2p.yaml
-              subPath: p2p.yaml
-              readOnly: true
-            - name: genesis
-              mountPath: /genesis
-        {{- end }}
 
         {{- if eq .Values.environment.name "mainnet" }}
         # See cardano-node issue 3238. Genesis file is too large to fit in etcd (1 MB limit)
@@ -150,7 +113,7 @@ spec:
               if [ -d "{{ .Values.persistence.mountPath }}/db" ]; then
                 exit 0 ;
               fi ;
-              cd "{{ .Values.persistence.mountPath }}" && curl -L "{{ .Values.persistence.sourceFile.url }}" | tar -xz ;
+              cd "{{ .Values.persistence.mountPath }}" && curl -o - "{{ .Values.persistence.sourceFile.url }}" | lz4 -c -d - | tar -x ;
           volumeMounts:
             - name: data
               mountPath: {{ .Values.persistence.mountPath }}
@@ -161,55 +124,6 @@ spec:
           - name: ndots
             value: "1"  # if there are any dots in a name, the name will be tried first as an absolute name before any search list elements are appended to it.
       containers:
-        - name: topology-updater
-          securityContext:
-            {{- toYaml .Values.relay.securityContext | nindent 12 }}
-          image: "{{- .Values.p2p.repository -}}:{{- .Values.p2p.tag -}}"
-          imagePullPolicy: {{ .Values.p2p.pullPolicy }}
-          resources:
-            limits:
-              cpu: "10m"
-              memory: "64Mi"
-          args:
-            - subscribe
-            - -a
-            - {{ .Release.Name }}-redis-master.{{ .Release.Namespace }}:6379
-            - -t
-            - {{ .Values.p2p.topic | default "p2p" }}
-            - -o
-            - /tmp/topology.new
-          env:
-          - name: "P2P_PASSWORD"
-            valueFrom:
-              secretKeyRef:
-                name: {{ template "cardano.secretName" . }}
-                key: redis-password
-          volumeMounts:
-            - name: genesis
-              mountPath: /tmp  # mounted in /tmp to prevent error: rename /tmp/tempfile558080208 /config/topology.json: invalid cross-device link
-
-        {{- if .Values.p2p.enabled }}
-        # shareProcessNamespace must be enabled.
-        - name: killer
-          securityContext:
-            {{- toYaml .Values.relay.securityContext | nindent 12 }}
-          image: "{{ .Values.busybox.repository }}:{{ .Values.busybox.tag }}"
-          imagePullPolicy: {{ .Values.busybox.pullPolicy }}
-          command: ["/bin/sh", "-c"]
-          args:
-            - set -e ;
-              while [ ! -f /tmp/topology.new ]; do sleep 60 ; done ;
-              mv -f /tmp/topology.new /tmp/topology.json ;
-              echo $(date +"%Y-%m-%d %T") new topology file detected, restarting cardano-node pid $(pgrep cardano-node) ;
-              kill -INT $(pgrep cardano-node) ;
-          volumeMounts:
-            - name: genesis
-              mountPath: /tmp
-          resources:
-            limits:
-              cpu: "10m"
-              memory: "64Mi"
-        {{- end }}
 
         - name: node
           securityContext:
@@ -326,9 +240,6 @@ spec:
         {{- end }}
 
       volumes:
-        - name: p2p
-          configMap:
-            name: {{ template "cardano.configName" . }}-p2p
         - name: readiness-probe
           configMap:
             name: {{ template "cardano.configName" . }}-{{ .Values.environment.name }}
