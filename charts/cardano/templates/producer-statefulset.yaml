@@ -107,6 +107,7 @@ spec:
           securityContext:
             runAsNonRoot: false
             runAsUser: 0
+            readOnlyRootFilesystem: true
           image: "{{- .Values.busybox.repository -}}:{{- .Values.busybox.tag -}}"
           imagePullPolicy: {{ .Values.busybox.pullPolicy }}
           command: ["sh", "-c"]
