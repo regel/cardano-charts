@@ -61,7 +61,7 @@ service:
   port: 6000
 
 environment:
-  # -- name of the Cardano network to use. Either 'testnet' or 'mainnet'
+  # -- name of the Cardano network to use. Either 'preview', 'testnet' or 'mainnet'
   name: testnet
 
 

@@ -1,0 +1,18 @@
+{{- if eq .Values.environment.name "preview" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "cardano.configName" . }}-preview
+data:
+{{ (tpl (.Files.Glob "files/readiness.sh").AsConfig . ) | indent 2 }}
+{{ (tpl (.Files.Glob "files/preview/producer-topology.json").AsConfig . ) | indent 2 }}
+{{ (tpl (.Files.Glob "files/preview/producer-config.json").AsConfig . ) | indent 2 }}
+{{ (tpl (.Files.Glob "files/preview/relay-topology.json").AsConfig . ) | indent 2 }}
+{{ (tpl (.Files.Glob "files/preview/relay-config.json").AsConfig . ) | indent 2 }}
+binaryData:
+{{- $root := . }}
+{{- $location := "files/preview/*.json.gz" }}
+{{- range $path, $bytes := .Files.Glob $location }}
+  {{ base $path }}: {{ $root.Files.Get $path | b64enc | quote }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,37 @@
+{{- $fullName := include "cardano.fullname" . }}
+{{- $namespace := .Release.Namespace }}
+{{- $replicaCount := .Values.relay.replicaCount | int }}
+
+{{- $producers := list }}
+{{- if .Values.producer.enabled }}
+{{- range $index, $value := until $replicaCount }}
+  {{- $addr := printf "%s-relay-%d.%s-headless.%s.svc.cluster.local" $fullName $index $fullName $namespace }}
+  {{- $item := dict "addr" $addr "port" 3001 "valency" 1 }}
+  {{- $producers = prepend $producers $item }}
+{{- end }}
+{{- end }}
+
+{
+  "Producers":
+  {{- toPrettyJson $producers | indent 4 }},
+  "LocalRoots": {
+    "groups": [
+      {
+        "localRoots": {
+          "accessPoints": [],
+          "advertise": false
+        },
+        "valency": 1
+      }
+    ]
+  },
+  "PublicRoots": [
+    {
+      "publicRoots": {
+        "accessPoints": [],
+        "advertise": false
+      }
+    }
+  ],
+  "useLedgerAfterSlot": 322000
+}

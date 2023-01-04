@@ -23,6 +23,9 @@ spec:
   template:
     metadata:
       annotations:
+{{- if eq .Values.environment.name "preview" }}
+        checksum/preview: {{ include (print $.Template.BasePath "/preview-configmap.yaml") . | sha256sum }}
+{{- end }}
 {{- if eq .Values.environment.name "testnet" }}
         checksum/testnet: {{ include (print $.Template.BasePath "/testnet-configmap.yaml") . | sha256sum }}
 {{- end }}

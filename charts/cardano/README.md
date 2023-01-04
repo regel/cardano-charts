@@ -1,6 +1,6 @@
 # cardano
 
-![Version: 0.4.0](https://img.shields.io/badge/Version-0.4.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.35.4](https://img.shields.io/badge/AppVersion-1.35.4-informational?style=flat-square)
+![Version: 0.4.2](https://img.shields.io/badge/Version-0.4.2-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.35.4](https://img.shields.io/badge/AppVersion-1.35.4-informational?style=flat-square)
 
 A Cardano Helm chart for Kubernetes
 
@@ -21,7 +21,7 @@ A Cardano Helm chart for Kubernetes
 | curl.pullPolicy | string | `"IfNotPresent"` |  |
 | curl.repository | string | `"ghcr.io/regel/lz4"` |  |
 | curl.tag | string | `"0.0.3"` |  |
-| environment.name | string | `"testnet"` | name of the Cardano network to use. Either 'testnet' or 'mainnet' |
+| environment.name | string | `"testnet"` | name of the Cardano network to use. Either 'preview', 'testnet' or 'mainnet' |
 | fullnameOverride | string | `""` |  |
 | global.storageClass | string | `nil` | Global StorageClass for Persistent Volume(s) |
 | image.pullPolicy | string | `"IfNotPresent"` |  |
