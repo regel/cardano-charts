@@ -18,7 +18,7 @@ jobs:
         id: checkov
         uses: bridgecrewio/checkov-action@master
         with:
-          api-key: ${{ secrets.BC_API_KEY }}
+#          api-key: ${{ secrets.BC_API_KEY }}
           directory: charts/cardano 
           quiet: true
           soft_fail: false # return an error code if there are failed checks not present in baseline
