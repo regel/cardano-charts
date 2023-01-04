@@ -1,6 +1,6 @@
 # cardano
 
-![Version: 0.3.0](https://img.shields.io/badge/Version-0.3.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.33.1](https://img.shields.io/badge/AppVersion-1.33.1-informational?style=flat-square)
+![Version: 0.4.0](https://img.shields.io/badge/Version-0.4.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.35.4](https://img.shields.io/badge/AppVersion-1.35.4-informational?style=flat-square)
 
 A Cardano Helm chart for Kubernetes
 
@@ -8,27 +8,25 @@ A Cardano Helm chart for Kubernetes
 
 | Repository | Name | Version |
 |------------|------|---------|
-| https://charts.bitnami.com/bitnami | common | 1.8.0 |
-| https://charts.bitnami.com/bitnami | redis | 16.4.0 |
+| https://charts.bitnami.com/bitnami | common | 1.17.1 |
 
 ## Values
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| admin | object | `{"pullPolicy":"IfNotPresent","repository":"inputoutput/cardano-node","tag":"1.33.1"}` | The admin pod is a special pod. This pod is air-gapped (nothing in, nothing out) and mounts cold keys from a Vault. Use this pod for admin operations such as KES key signature and node certificate signature |
+| admin | object | `{"pullPolicy":"IfNotPresent","repository":"inputoutput/cardano-node","tag":"1.35.4"}` | The admin pod is a special pod. This pod is air-gapped (nothing in, nothing out) and mounts cold keys from a Vault. Use this pod for admin operations such as KES key signature and node certificate signature |
 | busybox.pullPolicy | string | `"IfNotPresent"` |  |
 | busybox.repository | string | `"busybox"` |  |
 | busybox.tag | string | `"1.35.0"` |  |
 | curl.pullPolicy | string | `"IfNotPresent"` |  |
-| curl.repository | string | `"curlimages/curl"` |  |
-| curl.tag | string | `"7.80.0"` |  |
+| curl.repository | string | `"ghcr.io/regel/lz4"` |  |
+| curl.tag | string | `"0.0.3"` |  |
 | environment.name | string | `"testnet"` | name of the Cardano network to use. Either 'testnet' or 'mainnet' |
 | fullnameOverride | string | `""` |  |
-| global.redis.servicePort | int | `6379` |  |
 | global.storageClass | string | `nil` | Global StorageClass for Persistent Volume(s) |
 | image.pullPolicy | string | `"IfNotPresent"` |  |
 | image.repository | string | `"inputoutput/cardano-node"` |  |
-| image.tag | string | `"1.33.1"` | Overrides the image tag whose default is the chart appVersion. See [here](https://hub.docker.com/r/inputoutput/cardano-node/tags?page=1&ordering=last_updated) the full list of tags. |
+| image.tag | string | `"1.35.4"` | Overrides the image tag whose default is the chart appVersion. See [here](https://hub.docker.com/r/inputoutput/cardano-node/tags?page=1&ordering=last_updated) the full list of tags. |
 | imagePullSecrets | list | `[]` |  |
 | liveness.pullPolicy | string | `"IfNotPresent"` |  |
 | liveness.repository | string | `"alpine"` |  |
@@ -63,22 +61,8 @@ A Cardano Helm chart for Kubernetes
 | ogmios.service.port | int | `1337` |  |
 | ogmios.service.type | string | `"ClusterIP"` |  |
 | ogmios.tag | string | `"latest"` |  |
-| p2p | object | `{"clioEnabled":true,"debug":false,"ekgTimeout":5,"enabled":true,"ipVersion":4,"livenessProbe":{"enabled":true,"failureThreshold":1,"initialDelaySeconds":60,"periodSeconds":10,"successThreshold":1,"timeoutSeconds":1},"maxPeers":10,"probeTimeout":"1s","pullPolicy":"IfNotPresent","readinessProbe":{"enabled":true,"failureThreshold":10,"initialDelaySeconds":10,"periodSeconds":10,"successThreshold":1,"timeoutSeconds":1},"replicaCount":1,"repository":"regel/cardano-p2p","service":{"annotations":{},"port":8080,"type":"ClusterIP"},"tag":"v0.1.5","topic":"p2p"}` | P2P discovery configuration ref: https://github.com/regel/cardano-p2p |
-| p2p.clioEnabled | bool | `true` | Use 'clio' to push blockNo to the CLIO service |
+| p2p | object | `{"enabled":true}` | P2P discovery configuration |
 | p2p.enabled | bool | `true` | Enable peer to peer Cardano node discovery |
-| p2p.livenessProbe.enabled | bool | `true` | Enable livenessProbe on p2p node |
-| p2p.livenessProbe.failureThreshold | int | `1` | Failure threshold for livenessProbe |
-| p2p.livenessProbe.initialDelaySeconds | int | `60` | Initial delay seconds for livenessProbe |
-| p2p.livenessProbe.periodSeconds | int | `10` | Period seconds for livenessProbe |
-| p2p.livenessProbe.successThreshold | int | `1` | Success threshold for livenessProbe |
-| p2p.livenessProbe.timeoutSeconds | int | `1` | Timeout seconds for livenessProbe |
-| p2p.readinessProbe.enabled | bool | `true` | Enable readinessProbe on p2p nginx node |
-| p2p.readinessProbe.failureThreshold | int | `10` | Failure threshold for readinessProbe |
-| p2p.readinessProbe.initialDelaySeconds | int | `10` | Initial delay seconds for readinessProbe |
-| p2p.readinessProbe.periodSeconds | int | `10` | Period seconds for readinessProbe |
-| p2p.readinessProbe.successThreshold | int | `1` | Success threshold for readinessProbe |
-| p2p.readinessProbe.timeoutSeconds | int | `1` | Timeout seconds for readinessProbe |
-| p2p.repository | string | `"regel/cardano-p2p"` | Repository of the cardano-p2p image ref: https://hub.docker.com/r/regel/cardano-p2p |
 | persistence.accessModes | list | `["ReadWriteOnce"]` | PVC Access Mode for data volume |
 | persistence.annotations | object | `{}` | Annotations for the PVC |
 | persistence.enabled | bool | `true` | Enable persistence using PVC |
@@ -94,11 +78,13 @@ A Cardano Helm chart for Kubernetes
 | podAnnotations."prometheus.io/port" | string | `"12789"` |  |
 | podAnnotations."prometheus.io/scrape" | string | `"true"` |  |
 | podSecurityContext.fsGroup | int | `65532` |  |
+| podSecurityContext.runAsGroup | int | `65532` |  |
 | podSecurityContext.runAsNonRoot | bool | `true` |  |
 | podSecurityContext.runAsUser | int | `65532` |  |
 | podSecurityContext.seccompProfile.type | string | `"RuntimeDefault"` |  |
 | producer.affinity | object | `{}` | Affinity for Cardano producer pods assignment ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity NOTE: `master.podAffinityPreset`, `master.podAntiAffinityPreset`, and `master.nodeAffinityPreset` will be ignored when it's set |
 | producer.enabled | bool | `true` |  |
+| producer.extraFlags | string | `""` |  |
 | producer.livenessProbe | object | `{"enabled":true,"failureThreshold":1,"initialDelaySeconds":120,"periodSeconds":60,"successThreshold":1,"timeoutSeconds":5}` | Configure extra options for Cardano producer containers' liveness and readiness probes ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes |
 | producer.livenessProbe.enabled | bool | `true` | Enable livenessProbe on Cardano producer nodes |
 | producer.livenessProbe.failureThreshold | int | `1` | Failure threshold for livenessProbe |
@@ -134,13 +120,6 @@ A Cardano Helm chart for Kubernetes
 | producer.startupProbe.timeoutSeconds | int | `5` | Timeout seconds for startupProbe |
 | producer.terminationGracePeriodSeconds | int | `30` | Integer setting the termination grace period for the cardano-producer pods |
 | producer.tolerations | list | `[]` | master.tolerations Tolerations for Cardano producer pods assignment ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/ |
-| redis.architecture | string | `"standalone"` | Single service exposed (redis-master) |
-| redis.auth.existingSecret | string | `"{{ .Release.Name }}-auth"` | name of an existing secret that contains all of the required secrets |
-| redis.master.persistence.enabled | bool | `false` |  |
-| redis.networkPolicy.allowExternal | bool | `false` |  |
-| redis.networkPolicy.enabled | bool | `true` |  |
-| redis.replica.persistence.enabled | bool | `false` |  |
-| redis.replica.replicaCount | int | `0` |  |
 | relay.affinity | object | `{}` | Affinity for Cardano relay pods assignment ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity NOTE: `master.podAffinityPreset`, `master.podAntiAffinityPreset`, and `master.nodeAffinityPreset` will be ignored when it's set |
 | relay.extraFlags | string | `"+RTS -c -RTS"` |  |
 | relay.livenessProbe | object | `{"enabled":true,"failureThreshold":5,"initialDelaySeconds":900,"periodSeconds":60,"successThreshold":1,"timeoutSeconds":1}` | Configure extra options for Cardano relay containers' liveness and readiness probes |
