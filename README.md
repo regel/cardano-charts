@@ -101,7 +101,7 @@ You may find useful resources below:
 Install the Azure Key Vault provider:
 
 ```
-helm repo add https://raw.githubusercontent.com/Azure/secrets-store-csi-driver-provider-azure/master/charts
+helm repo add csi-secrets-store-provider-azure https://azure.github.io/secrets-store-csi-driver-provider-azure/charts
 helm install csi-secrets-store-provider-azure/csi-secrets-store-provider-azure --generate-name --set secrets-store-csi-driver.syncSecret.enabled=true --namespace kube-system
 ```
 
@@ -113,6 +113,9 @@ helm upgrade --install pool \
   --values cardano/values.yaml \
   --set vault.csi.enabled=false \
   --set producer.enabled=false \
+  --set environment.name=testnet \
+  --set persistence.sourceFile.enabled=true \
+  --set persistence.sourceFile.url=$(curl -s https://downloads.csnapshots.io/snapshots/testnet/testnet-db-snapshot.json| jq -r .[].file_name) \
     cardano/cardano
 ```
 
